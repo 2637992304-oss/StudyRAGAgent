@@ -73,7 +73,7 @@ def main():
     for name in files:
         path = Path(name)
         if (
-            any(p in DENIED for p in path.parts)
+            any(p in DENIED or p.startswith(".pytest_") for p in path.parts)
             or (path.name.startswith(".env") and path.name != ".env.example")
             or path.suffix in {".dump", ".log", ".backup"}
         ):
@@ -100,6 +100,33 @@ def main():
                     p.startswith(relative.rstrip("/") + "/") for p in public
                 ):
                     errors.append(f"Unpublished link: {name} -> {relative}")
+    # Check reachable history for credentials too, without rewriting history or
+    # exposing blob contents. Generated but non-sensitive old fixtures are not
+    # treated as secret leaks.
+    objects = subprocess.run(
+        [*GIT, "rev-list", "--objects", "--all"],
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
+    ).stdout.splitlines()
+    if objects:
+        object_ids = b"\n".join(line.split(b" ", 1)[0] for line in objects) + b"\n"
+        payload = subprocess.check_output(
+            [*GIT, "cat-file", "--batch"], input=object_ids, cwd=ROOT
+        )
+        offset = 0
+        while offset < len(payload):
+            end = payload.index(b"\n", offset)
+            oid, kind, size = payload[offset:end].split()
+            size = int(size)
+            body = payload[end + 1 : end + 1 + size]
+            if kind == b"blob" and (
+                TOKENS.search(body) or any(s in body for s in secrets)
+            ):
+                errors.append(
+                    f"Possible credential in history blob: {oid.decode()} (value withheld)"
+                )
+            offset = end + 1 + size + 1
     print(
         json.dumps(
             {"files_checked": len(files), "errors": errors},

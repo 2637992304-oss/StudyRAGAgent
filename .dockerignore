@@ -41,3 +41,5 @@ frontend/dist/
 frontend/test-results/
 frontend/playwright-report/
 **/*.tsbuildinfo
+**/.pytest_tmp*/
+**/.pytest_cache/
