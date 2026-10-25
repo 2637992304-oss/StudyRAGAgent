@@ -1,7 +1,6 @@
 # 项目文档
 
 - [本地部署、配置、备份与测试入口](../README.md)
-- [技术实施指引与阶段进度](../TECHNICAL_IMPLEMENTATION_GUIDE.md)
 - [阶段 6 实施与验收](stage6/report.md)
 - [阶段 6 进度](stage6/progress.md)
 - [课程对话界面与注册后的使用](frontend-workspace.md)

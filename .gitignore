@@ -21,6 +21,9 @@ storage/
 .DS_Store
 .runtime/
 
+# Local implementation planning; not part of the public project documentation.
+/TECHNICAL_IMPLEMENTATION_GUIDE.md
+
 
 # Isolated test directories used when an existing Windows pytest directory is locked.
 .stage5-test-temp/

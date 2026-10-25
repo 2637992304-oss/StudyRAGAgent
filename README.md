@@ -188,6 +188,6 @@ API 日志含请求 ID、路由模板、状态与完整流耗时；Worker 日志
 
 ## 文档与许可
 
-[文档导航](docs/README.md) · [技术实施指引](TECHNICAL_IMPLEMENTATION_GUIDE.md) · [课程对话界面](docs/frontend-workspace.md) · [阶段 6 验收](docs/stage6/report.md)
+[文档导航](docs/README.md) · [课程对话界面](docs/frontend-workspace.md) · [阶段 6 验收](docs/stage6/report.md)
 
 项目自有代码采用 [MIT](LICENSE)。测试教材节选、模型和第三方依赖保留原许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。公开代码不意味着第三方教材可以任意商业使用。
