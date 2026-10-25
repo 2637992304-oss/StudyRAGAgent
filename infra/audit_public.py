@@ -124,7 +124,7 @@ def main():
                 TOKENS.search(body) or any(s in body for s in secrets)
             ):
                 errors.append(
-                    f"Possible credential in history blob: {oid.decode()} (value withheld)"
+                    f"Possible history credential: {oid.decode()} (value withheld)"
                 )
             offset = end + 1 + size + 1
     print(
