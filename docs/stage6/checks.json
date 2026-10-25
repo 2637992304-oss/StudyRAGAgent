@@ -30,7 +30,32 @@
   "limits": [
     "Bounded generated sample; not a model quality benchmark",
     "Historical initial failures retained locally",
-    "External Tavily/private GitHub acceptance not rerun",
-    "Remote CI and clean clone verification pending at initial push"
-  ]
+    "External Tavily/private GitHub acceptance not rerun"
+  ],
+  "ci": {
+    "url": "https://github.com/2637992304-oss/StudyRAGAgent/actions/runs/40209346837",
+    "commit": "4815c938ec1119f0ed9ad23c0732f9e760b6d6a5",
+    "backend": "success",
+    "frontend": "success",
+    "deployment_restart_restore_delete": "success"
+  },
+  "completed_date": "2026-10-26",
+  "clean_clone": {
+    "anonymous_clone": true,
+    "commit": "4815c938ec1119f0ed9ad23c0732f9e760b6d6a5",
+    "template_configuration": true,
+    "fresh_database_storage_models": true,
+    "real_ingestion_qa_citations_scope": "passed",
+    "tag": "v0.1.0"
+  },
+  "cleanup": {
+    "projects": [
+      "studyrag-stage6",
+      "studyrag-stage6-restore",
+      "studyrag-stage6-clean"
+    ],
+    "remaining_test_containers": 0,
+    "remaining_test_volumes": 0,
+    "private_local_backup_retained": true
+  }
 }
