@@ -8,7 +8,7 @@
 - 服务端校验来源权限与编号，AI 核对答案；必要时进行一次有界修正。
 - 本地 Docker 部署、隔离备份恢复、自动化测试与 GitHub Actions。
 
-公开仓库：[2637992304-oss/StudyRAGAgent](https://github.com/2637992304-oss/StudyRAGAgent)。这是本地学习和工程展示项目，质量与边界见[验收报告](docs/stage6/report.md)。
+公开仓库：[2637992304-oss/StudyRAGAgent](https://github.com/2637992304-oss/StudyRAGAgent)。质量与边界见[验收报告](docs/stage6/report.md)。
 
 ![使用自制笔记验证的课程问答与来源](docs/stage6/images/course-chat.png)
 
