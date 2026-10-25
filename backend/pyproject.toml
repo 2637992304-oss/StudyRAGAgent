@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "studyrag-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.115.12",
+  "uvicorn==0.34.2",
+  "pydantic-settings==2.8.1",
+  "sqlalchemy==2.0.40",
+  "alembic==1.15.2",
+  "psycopg[binary]==3.2.6",
+  "redis==5.2.1",
+  "celery>=5.5,<6",
+  "pgvector>=0.4,<1",
+  "python-multipart>=0.0.20,<1",
+  "itsdangerous>=2.2,<3",
+  "pypdf>=5.4,<7",
+  "python-docx>=1.1,<2",
+  "python-pptx>=1.0,<2",
+  "fastembed>=0.7,<1",
+  "httpx==0.28.1",
+  "langgraph>=1,<2",
+  "pillow>=11,<13",
+  "email-validator>=2.2,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "ruff==0.11.5"]
+ocr = ["rapidocr>=3,<4", "pypdfium2>=4,<6", "pillow>=10,<13"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--basetemp=.pytest_tmp"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+extend-exclude = [".eval-cache"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+

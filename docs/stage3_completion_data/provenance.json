@@ -1,0 +1,18 @@
+[
+  {
+    "key": "book_dev",
+    "url": "https://www.greenteapress.com/thinkpython2/html/thinkpython2005.html",
+    "raw_sha256": "b9477f3bbd8c6712a8b6fcc449d8db8694fb88215f721cc5a5b53cd74a2f960d",
+    "text_sha256": "1ff82dbe16807b848a6359d14161a4c066f3ba0fca96ad8cb73bb5cc4e016e20",
+    "license": "CC-BY-NC-3.0",
+    "author": "Allen B. Downey"
+  },
+  {
+    "key": "book_holdout",
+    "url": "https://www.greenteapress.com/thinkpython2/html/thinkpython2009.html",
+    "raw_sha256": "970beb4645effb2d4a5fa85acfc746ad96b93fe043ed39e99ae7dadc114f9698",
+    "text_sha256": "53e4d3663507d740acbbd9100ce00d5c68573efce4fb42726862eb1074781187",
+    "license": "CC-BY-NC-3.0",
+    "author": "Allen B. Downey"
+  }
+]

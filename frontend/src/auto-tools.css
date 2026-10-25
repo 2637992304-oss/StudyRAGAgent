@@ -1,0 +1,4 @@
+.source-disclosure { margin-top: 12px; border-top: 1px solid #dbe5e2; padding-top: 10px; }
+.source-disclosure > summary { cursor: pointer; color: #166e5d; font-size: .9rem; }
+.source-card:focus { outline: 2px solid #178d76; outline-offset: 3px; }
+.source-card .text-button { display: block; margin-top: 10px; }

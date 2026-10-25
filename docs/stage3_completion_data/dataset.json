@@ -1,0 +1,1849 @@
+{
+  "version": "stage3-completion-v1",
+  "license": "per-document: CC0-1.0 / CC-BY-NC-3.0",
+  "provenance": "Authored synthetic contrasts plus attributed Think Python 2e chapters 4 and 8. Distinct documents/topics by split. Questions/reference interpretations pending human confirmation.",
+  "documents": [
+    {
+      "key": "d_concept_0",
+      "file": "d_concept_0.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "d_concept_1",
+      "file": "d_concept_1.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "d_concept_2",
+      "file": "d_concept_2.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "d_concept_3",
+      "file": "d_concept_3.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "d_concept_4",
+      "file": "d_concept_4.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "d_concept_5",
+      "file": "d_concept_5.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "d_foreign",
+      "file": "d_foreign.md",
+      "owner": "b",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "h_concept_0",
+      "file": "h_concept_0.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "h_concept_1",
+      "file": "h_concept_1.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "h_concept_2",
+      "file": "h_concept_2.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "h_concept_3",
+      "file": "h_concept_3.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "h_concept_4",
+      "file": "h_concept_4.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "h_concept_5",
+      "file": "h_concept_5.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "h_foreign",
+      "file": "h_foreign.md",
+      "owner": "b",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0"
+    },
+    {
+      "key": "book_dev",
+      "file": "book_dev.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC-BY-NC-3.0",
+      "source_url": "https://www.greenteapress.com/thinkpython2/html/thinkpython2005.html",
+      "author": "Allen B. Downey",
+      "transformations": "HTML block text; whitespace normalized; headings marked #; images not extracted"
+    },
+    {
+      "key": "book_holdout",
+      "file": "book_holdout.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC-BY-NC-3.0",
+      "source_url": "https://www.greenteapress.com/thinkpython2/html/thinkpython2009.html",
+      "author": "Allen B. Downey",
+      "transformations": "HTML block text; whitespace normalized; headings marked #; images not extracted"
+    }
+  ],
+  "cases": [
+    {
+      "id": "d010",
+      "split": "dev",
+      "question": "文档中的durability具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_0:持久性概念正文:事务提交后，其结果不",
+          "document": "d_concept_0",
+          "section": "持久性概念正文",
+          "quote": "事务提交后，其结果不会因进程退出而丢失。",
+          "subquestion": "持久性"
+        }
+      ],
+      "reference_answer": "事务提交后，其结果不会因进程退出而丢失。",
+      "key_facts": [
+        "事务提交后，其结果不会因进程退出而丢失。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d011",
+      "split": "dev",
+      "question": "文档中的atomicity具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_1:原子性概念正文:一个事务的操作全部成",
+          "document": "d_concept_1",
+          "section": "原子性概念正文",
+          "quote": "一个事务的操作全部成功或全部回滚。",
+          "subquestion": "原子性"
+        }
+      ],
+      "reference_answer": "一个事务的操作全部成功或全部回滚。",
+      "key_facts": [
+        "一个事务的操作全部成功或全部回滚。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d012",
+      "split": "dev",
+      "question": "文档中的encapsulation具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_2:封装概念正文:把相关实现组织在一个",
+          "document": "d_concept_2",
+          "section": "封装概念正文",
+          "quote": "把相关实现组织在一个明确的接口后面。",
+          "subquestion": "封装"
+        }
+      ],
+      "reference_answer": "把相关实现组织在一个明确的接口后面。",
+      "key_facts": [
+        "把相关实现组织在一个明确的接口后面。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d013",
+      "split": "dev",
+      "question": "文档中的generalization具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_3:泛化概念正文:用参数表达变化，使同",
+          "document": "d_concept_3",
+          "section": "泛化概念正文",
+          "quote": "用参数表达变化，使同一函数适用更多输入。",
+          "subquestion": "泛化"
+        }
+      ],
+      "reference_answer": "用参数表达变化，使同一函数适用更多输入。",
+      "key_facts": [
+        "用参数表达变化，使同一函数适用更多输入。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d014",
+      "split": "dev",
+      "question": "文档中的refactoring具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_4:重构概念正文:在保持外部行为的前提",
+          "document": "d_concept_4",
+          "section": "重构概念正文",
+          "quote": "在保持外部行为的前提下调整程序结构。",
+          "subquestion": "重构"
+        }
+      ],
+      "reference_answer": "在保持外部行为的前提下调整程序结构。",
+      "key_facts": [
+        "在保持外部行为的前提下调整程序结构。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d015",
+      "split": "dev",
+      "question": "文档中的recursion具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_5:递归概念正文:函数通过调用自身求解",
+          "document": "d_concept_5",
+          "section": "递归概念正文",
+          "quote": "函数通过调用自身求解规模更小的同类问题，并需要终止条件。",
+          "subquestion": "递归"
+        }
+      ],
+      "reference_answer": "函数通过调用自身求解规模更小的同类问题，并需要终止条件。",
+      "key_facts": [
+        "函数通过调用自身求解规模更小的同类问题，并需要终止条件。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d020",
+      "split": "dev",
+      "question": "请分别解释持久性与原子性，两部分都要回答。",
+      "categories": [
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_0:持久性概念正文:事务提交后，其结果不",
+          "document": "d_concept_0",
+          "section": "持久性概念正文",
+          "quote": "事务提交后，其结果不会因进程退出而丢失。",
+          "subquestion": "持久性"
+        },
+        {
+          "unit": "d_concept_1:原子性概念正文:一个事务的操作全部成",
+          "document": "d_concept_1",
+          "section": "原子性概念正文",
+          "quote": "一个事务的操作全部成功或全部回滚。",
+          "subquestion": "原子性"
+        }
+      ],
+      "reference_answer": "事务提交后，其结果不会因进程退出而丢失。；一个事务的操作全部成功或全部回滚。",
+      "key_facts": [
+        "事务提交后，其结果不会因进程退出而丢失。",
+        "一个事务的操作全部成功或全部回滚。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d021",
+      "split": "dev",
+      "question": "请分别解释封装与泛化，两部分都要回答。",
+      "categories": [
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_2:封装概念正文:把相关实现组织在一个",
+          "document": "d_concept_2",
+          "section": "封装概念正文",
+          "quote": "把相关实现组织在一个明确的接口后面。",
+          "subquestion": "封装"
+        },
+        {
+          "unit": "d_concept_3:泛化概念正文:用参数表达变化，使同",
+          "document": "d_concept_3",
+          "section": "泛化概念正文",
+          "quote": "用参数表达变化，使同一函数适用更多输入。",
+          "subquestion": "泛化"
+        }
+      ],
+      "reference_answer": "把相关实现组织在一个明确的接口后面。；用参数表达变化，使同一函数适用更多输入。",
+      "key_facts": [
+        "把相关实现组织在一个明确的接口后面。",
+        "用参数表达变化，使同一函数适用更多输入。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d022",
+      "split": "dev",
+      "question": "请分别解释重构与递归，两部分都要回答。",
+      "categories": [
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0",
+          "d_concept_1",
+          "d_concept_2",
+          "d_concept_3",
+          "d_concept_4",
+          "d_concept_5",
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "d_concept_4:重构概念正文:在保持外部行为的前提",
+          "document": "d_concept_4",
+          "section": "重构概念正文",
+          "quote": "在保持外部行为的前提下调整程序结构。",
+          "subquestion": "重构"
+        },
+        {
+          "unit": "d_concept_5:递归概念正文:函数通过调用自身求解",
+          "document": "d_concept_5",
+          "section": "递归概念正文",
+          "quote": "函数通过调用自身求解规模更小的同类问题，并需要终止条件。",
+          "subquestion": "递归"
+        }
+      ],
+      "reference_answer": "在保持外部行为的前提下调整程序结构。；函数通过调用自身求解规模更小的同类问题，并需要终止条件。",
+      "key_facts": [
+        "在保持外部行为的前提下调整程序结构。",
+        "函数通过调用自身求解规模更小的同类问题，并需要终止条件。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d030",
+      "split": "dev",
+      "question": "资料承诺的99分位响应时间具体是多少毫秒？",
+      "categories": [
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d031",
+      "split": "dev",
+      "question": "这些定义对应的下次考试是哪一天？",
+      "categories": [
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d032",
+      "split": "dev",
+      "question": "案例发生问题后，供应商保证几小时完成修复？",
+      "categories": [
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_concept_0"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d040",
+      "split": "dev",
+      "question": "d专属实验室在哪里？",
+      "categories": [
+        "boundary"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "d_foreign"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "范围被拒绝",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h010",
+      "split": "holdout",
+      "question": "文档中的isolation具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_0:隔离性概念正文:并发事务之间的中间状",
+          "document": "h_concept_0",
+          "section": "隔离性概念正文",
+          "quote": "并发事务之间的中间状态需要按约定级别隔离。",
+          "subquestion": "隔离性"
+        }
+      ],
+      "reference_answer": "并发事务之间的中间状态需要按约定级别隔离。",
+      "key_facts": [
+        "并发事务之间的中间状态需要按约定级别隔离。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h011",
+      "split": "holdout",
+      "question": "文档中的immutable具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_1:不可变概念正文:对象创建后不能原地修",
+          "document": "h_concept_1",
+          "section": "不可变概念正文",
+          "quote": "对象创建后不能原地修改其值。",
+          "subquestion": "不可变"
+        }
+      ],
+      "reference_answer": "对象创建后不能原地修改其值。",
+      "key_facts": [
+        "对象创建后不能原地修改其值。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h012",
+      "split": "holdout",
+      "question": "文档中的traversal具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_2:遍历概念正文:按顺序访问序列中的每",
+          "document": "h_concept_2",
+          "section": "遍历概念正文",
+          "quote": "按顺序访问序列中的每一个元素。",
+          "subquestion": "遍历"
+        }
+      ],
+      "reference_answer": "按顺序访问序列中的每一个元素。",
+      "key_facts": [
+        "按顺序访问序列中的每一个元素。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h013",
+      "split": "holdout",
+      "question": "文档中的slice具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_3:切片概念正文:从序列中取出指定索引",
+          "document": "h_concept_3",
+          "section": "切片概念正文",
+          "quote": "从序列中取出指定索引范围的子序列。",
+          "subquestion": "切片"
+        }
+      ],
+      "reference_answer": "从序列中取出指定索引范围的子序列。",
+      "key_facts": [
+        "从序列中取出指定索引范围的子序列。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h014",
+      "split": "holdout",
+      "question": "文档中的index具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_4:索引概念正文:表示元素在序列中的位",
+          "document": "h_concept_4",
+          "section": "索引概念正文",
+          "quote": "表示元素在序列中的位置。",
+          "subquestion": "索引"
+        }
+      ],
+      "reference_answer": "表示元素在序列中的位置。",
+      "key_facts": [
+        "表示元素在序列中的位置。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h015",
+      "split": "holdout",
+      "question": "文档中的comparison具体是什么意思？请给出定义。",
+      "categories": [
+        "term_separation",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_5:比较概念正文:根据运算符判断两个值",
+          "document": "h_concept_5",
+          "section": "比较概念正文",
+          "quote": "根据运算符判断两个值的关系。",
+          "subquestion": "比较"
+        }
+      ],
+      "reference_answer": "根据运算符判断两个值的关系。",
+      "key_facts": [
+        "根据运算符判断两个值的关系。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h020",
+      "split": "holdout",
+      "question": "请分别解释隔离性与不可变，两部分都要回答。",
+      "categories": [
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_0:隔离性概念正文:并发事务之间的中间状",
+          "document": "h_concept_0",
+          "section": "隔离性概念正文",
+          "quote": "并发事务之间的中间状态需要按约定级别隔离。",
+          "subquestion": "隔离性"
+        },
+        {
+          "unit": "h_concept_1:不可变概念正文:对象创建后不能原地修",
+          "document": "h_concept_1",
+          "section": "不可变概念正文",
+          "quote": "对象创建后不能原地修改其值。",
+          "subquestion": "不可变"
+        }
+      ],
+      "reference_answer": "并发事务之间的中间状态需要按约定级别隔离。；对象创建后不能原地修改其值。",
+      "key_facts": [
+        "并发事务之间的中间状态需要按约定级别隔离。",
+        "对象创建后不能原地修改其值。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h021",
+      "split": "holdout",
+      "question": "请分别解释遍历与切片，两部分都要回答。",
+      "categories": [
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_2:遍历概念正文:按顺序访问序列中的每",
+          "document": "h_concept_2",
+          "section": "遍历概念正文",
+          "quote": "按顺序访问序列中的每一个元素。",
+          "subquestion": "遍历"
+        },
+        {
+          "unit": "h_concept_3:切片概念正文:从序列中取出指定索引",
+          "document": "h_concept_3",
+          "section": "切片概念正文",
+          "quote": "从序列中取出指定索引范围的子序列。",
+          "subquestion": "切片"
+        }
+      ],
+      "reference_answer": "按顺序访问序列中的每一个元素。；从序列中取出指定索引范围的子序列。",
+      "key_facts": [
+        "按顺序访问序列中的每一个元素。",
+        "从序列中取出指定索引范围的子序列。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h022",
+      "split": "holdout",
+      "question": "请分别解释索引与比较，两部分都要回答。",
+      "categories": [
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0",
+          "h_concept_1",
+          "h_concept_2",
+          "h_concept_3",
+          "h_concept_4",
+          "h_concept_5",
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "h_concept_4:索引概念正文:表示元素在序列中的位",
+          "document": "h_concept_4",
+          "section": "索引概念正文",
+          "quote": "表示元素在序列中的位置。",
+          "subquestion": "索引"
+        },
+        {
+          "unit": "h_concept_5:比较概念正文:根据运算符判断两个值",
+          "document": "h_concept_5",
+          "section": "比较概念正文",
+          "quote": "根据运算符判断两个值的关系。",
+          "subquestion": "比较"
+        }
+      ],
+      "reference_answer": "表示元素在序列中的位置。；根据运算符判断两个值的关系。",
+      "key_facts": [
+        "表示元素在序列中的位置。",
+        "根据运算符判断两个值的关系。"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h030",
+      "split": "holdout",
+      "question": "资料承诺的99分位响应时间具体是多少毫秒？",
+      "categories": [
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h031",
+      "split": "holdout",
+      "question": "这些定义对应的下次考试是哪一天？",
+      "categories": [
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h032",
+      "split": "holdout",
+      "question": "案例发生问题后，供应商保证几小时完成修复？",
+      "categories": [
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_concept_0"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h040",
+      "split": "holdout",
+      "question": "h专属实验室在哪里？",
+      "categories": [
+        "boundary"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "h_foreign"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "范围被拒绝",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d100",
+      "split": "dev",
+      "question": "教材中encapsulation是什么意思？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.4 Encapsulation:Wrapping a",
+          "document": "book_dev",
+          "section": "4.4 Encapsulation",
+          "quote": "Wrapping a piece of code up in a function is called encapsulation.",
+          "subquestion": "book_fact_0",
+          "source_line": 55
+        }
+      ],
+      "reference_answer": "把一段代码包装进函数称为封装。",
+      "key_facts": [
+        "Wrapping a piece of code up in a function is called encapsulation."
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d101",
+      "split": "dev",
+      "question": "函数如何通过generalization变得更通用？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.5 Generalization:Adding a p",
+          "document": "book_dev",
+          "section": "4.5 Generalization",
+          "quote": "Adding a parameter to a function is called generalization",
+          "subquestion": "book_fact_1",
+          "source_line": 59
+        }
+      ],
+      "reference_answer": "通过增加参数，让函数适用于更多情况。",
+      "key_facts": [
+        "Adding a parameter to a function is called generalization"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d102",
+      "split": "dev",
+      "question": "refactoring的目的是什么？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.7 Refactoring:rearrangin",
+          "document": "book_dev",
+          "section": "4.7 Refactoring",
+          "quote": "rearranging a program to improve interfaces and facilitate code re-use",
+          "subquestion": "book_fact_2",
+          "source_line": 90
+        }
+      ],
+      "reference_answer": "重排程序结构以改进接口并方便代码复用。",
+      "key_facts": [
+        "rearranging a program to improve interfaces and facilitate code re-use"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d103",
+      "split": "dev",
+      "question": "docstring放在函数什么位置，解释什么？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.9 docstring:A docstrin",
+          "document": "book_dev",
+          "section": "4.9 docstring",
+          "quote": "A docstring is a string at the beginning of a function",
+          "subquestion": "book_fact_3",
+          "source_line": 101
+        }
+      ],
+      "reference_answer": "放在函数开头，用于解释接口。",
+      "key_facts": [
+        "A docstring is a string at the beginning of a function"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d104",
+      "split": "dev",
+      "question": "precondition要求由谁在什么时候满足？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:precondition::A requirem",
+          "document": "book_dev",
+          "section": "precondition:",
+          "quote": "A requirement that should be satisfied by the caller before a function starts.",
+          "subquestion": "book_fact_4",
+          "source_line": 132
+        }
+      ],
+      "reference_answer": "调用者应在函数开始前满足。",
+      "key_facts": [
+        "A requirement that should be satisfied by the caller before a function starts."
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d105",
+      "split": "dev",
+      "question": "为什么这种传参方式叫keyword arguments？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.5 Generalization:they inclu",
+          "document": "book_dev",
+          "section": "4.5 Generalization",
+          "quote": "they include the parameter names as “keywords”",
+          "subquestion": "book_fact_5",
+          "source_line": 66
+        }
+      ],
+      "reference_answer": "因为参数列表里包含参数名作为关键字。",
+      "key_facts": [
+        "they include the parameter names as “keywords”"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d110",
+      "split": "dev",
+      "question": "请同时回答两个问题：教材中encapsulation是什么意思？ 函数如何通过generalization变得更通用？",
+      "categories": [
+        "open_textbook",
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.4 Encapsulation:Wrapping a",
+          "document": "book_dev",
+          "section": "4.4 Encapsulation",
+          "quote": "Wrapping a piece of code up in a function is called encapsulation.",
+          "subquestion": "book_fact_0",
+          "source_line": 55
+        },
+        {
+          "unit": "book_dev:4.5 Generalization:Adding a p",
+          "document": "book_dev",
+          "section": "4.5 Generalization",
+          "quote": "Adding a parameter to a function is called generalization",
+          "subquestion": "book_fact_1",
+          "source_line": 59
+        }
+      ],
+      "reference_answer": "把一段代码包装进函数称为封装。通过增加参数，让函数适用于更多情况。",
+      "key_facts": [
+        "Wrapping a piece of code up in a function is called encapsulation.",
+        "Adding a parameter to a function is called generalization"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d111",
+      "split": "dev",
+      "question": "请同时回答两个问题：refactoring的目的是什么？ docstring放在函数什么位置，解释什么？",
+      "categories": [
+        "open_textbook",
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.7 Refactoring:rearrangin",
+          "document": "book_dev",
+          "section": "4.7 Refactoring",
+          "quote": "rearranging a program to improve interfaces and facilitate code re-use",
+          "subquestion": "book_fact_2",
+          "source_line": 90
+        },
+        {
+          "unit": "book_dev:4.9 docstring:A docstrin",
+          "document": "book_dev",
+          "section": "4.9 docstring",
+          "quote": "A docstring is a string at the beginning of a function",
+          "subquestion": "book_fact_3",
+          "source_line": 101
+        }
+      ],
+      "reference_answer": "重排程序结构以改进接口并方便代码复用。放在函数开头，用于解释接口。",
+      "key_facts": [
+        "rearranging a program to improve interfaces and facilitate code re-use",
+        "A docstring is a string at the beginning of a function"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d120",
+      "split": "dev",
+      "question": "本章承诺相关代码在十万字符输入下耗时多少毫秒？",
+      "categories": [
+        "open_textbook",
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d121",
+      "split": "dev",
+      "question": "本章对应课程的期末考试具体是哪一天？",
+      "categories": [
+        "open_textbook",
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d130",
+      "split": "dev",
+      "question": "为什么circle接口应该有r参数，而不宜把n暴露给使用者？",
+      "categories": [
+        "open_textbook",
+        "exercise",
+        "long_passage"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.6 Interface design:r belongs ",
+          "document": "book_dev",
+          "section": "4.6 Interface design",
+          "quote": "r belongs in the interface because it specifies the circle to be drawn",
+          "subquestion": "4.6 Interface design"
+        }
+      ],
+      "reference_answer": "r指定圆，n是绘制细节。",
+      "key_facts": [
+        "r belongs in the interface because it specifies the circle to be drawn"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "d131",
+      "split": "dev",
+      "question": "教材约定docstring用哪种引号形式？",
+      "categories": [
+        "open_textbook",
+        "exercise",
+        "long_passage"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_dev"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_dev:4.9 docstring:all docstr",
+          "document": "book_dev",
+          "section": "4.9 docstring",
+          "quote": "all docstrings are triple-quoted strings",
+          "subquestion": "4.9 docstring"
+        }
+      ],
+      "reference_answer": "使用三引号字符串。",
+      "key_facts": [
+        "all docstrings are triple-quoted strings"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h100",
+      "split": "holdout",
+      "question": "字符串第一个字符的索引从几开始？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.1 A string is a sequence:the offset",
+          "document": "book_holdout",
+          "section": "8.1 A string is a sequence",
+          "quote": "the offset of the first letter is zero",
+          "subquestion": "book_fact_0",
+          "source_line": 10
+        }
+      ],
+      "reference_answer": "从0开始。",
+      "key_facts": [
+        "the offset of the first letter is zero"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h101",
+      "split": "holdout",
+      "question": "内置len用于字符串时返回什么？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.2 len:returns th",
+          "document": "book_holdout",
+          "section": "8.2 len",
+          "quote": "returns the number of characters in a string",
+          "subquestion": "book_fact_1",
+          "source_line": 18
+        }
+      ],
+      "reference_answer": "返回字符串的字符数。",
+      "key_facts": [
+        "returns the number of characters in a string"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h102",
+      "split": "holdout",
+      "question": "教材中[n:m]切片包含左右两个端点吗？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.4 String slices:including ",
+          "document": "book_holdout",
+          "section": "8.4 String slices",
+          "quote": "including the first but excluding the last",
+          "subquestion": "book_fact_2",
+          "source_line": 41
+        }
+      ],
+      "reference_answer": "包含起点n，不包含终点m。",
+      "key_facts": [
+        "including the first but excluding the last"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h103",
+      "split": "holdout",
+      "question": "Python字符串immutable意味着什么，想改变内容怎么办？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.5 Strings are immutable:strings ar",
+          "document": "book_holdout",
+          "section": "8.5 Strings are immutable",
+          "quote": "strings are immutable, which means you can’t change an existing string",
+          "subquestion": "book_fact_3",
+          "source_line": 52
+        }
+      ],
+      "reference_answer": "不能修改已有字符串，可以创建一个改变后的新字符串。",
+      "key_facts": [
+        "strings are immutable, which means you can’t change an existing string"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h104",
+      "split": "holdout",
+      "question": "教材find函数没找到字符时返回多少？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.6 Searching:If the cha",
+          "document": "book_holdout",
+          "section": "8.6 Searching",
+          "quote": "If the character is not found, the function returns -1.",
+          "subquestion": "book_fact_4",
+          "source_line": 58
+        }
+      ],
+      "reference_answer": "返回-1。",
+      "key_facts": [
+        "If the character is not found, the function returns -1."
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h105",
+      "split": "holdout",
+      "question": "in操作符用于两个字符串，什么时候返回True？",
+      "categories": [
+        "open_textbook",
+        "mixed_language"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.9 The in operator:returns Tr",
+          "document": "book_holdout",
+          "section": "8.9 The in operator",
+          "quote": "returns True if the first appears as a substring in the second",
+          "subquestion": "book_fact_5",
+          "source_line": 86
+        }
+      ],
+      "reference_answer": "第一个字符串是第二个的子串时。",
+      "key_facts": [
+        "returns True if the first appears as a substring in the second"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h110",
+      "split": "holdout",
+      "question": "请同时回答两个问题：字符串第一个字符的索引从几开始？ 内置len用于字符串时返回什么？",
+      "categories": [
+        "open_textbook",
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.1 A string is a sequence:the offset",
+          "document": "book_holdout",
+          "section": "8.1 A string is a sequence",
+          "quote": "the offset of the first letter is zero",
+          "subquestion": "book_fact_0",
+          "source_line": 10
+        },
+        {
+          "unit": "book_holdout:8.2 len:returns th",
+          "document": "book_holdout",
+          "section": "8.2 len",
+          "quote": "returns the number of characters in a string",
+          "subquestion": "book_fact_1",
+          "source_line": 18
+        }
+      ],
+      "reference_answer": "从0开始。返回字符串的字符数。",
+      "key_facts": [
+        "the offset of the first letter is zero",
+        "returns the number of characters in a string"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h111",
+      "split": "holdout",
+      "question": "请同时回答两个问题：教材中[n:m]切片包含左右两个端点吗？ Python字符串immutable意味着什么，想改变内容怎么办？",
+      "categories": [
+        "open_textbook",
+        "multi_evidence"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.4 String slices:including ",
+          "document": "book_holdout",
+          "section": "8.4 String slices",
+          "quote": "including the first but excluding the last",
+          "subquestion": "book_fact_2",
+          "source_line": 41
+        },
+        {
+          "unit": "book_holdout:8.5 Strings are immutable:strings ar",
+          "document": "book_holdout",
+          "section": "8.5 Strings are immutable",
+          "quote": "strings are immutable, which means you can’t change an existing string",
+          "subquestion": "book_fact_3",
+          "source_line": 52
+        }
+      ],
+      "reference_answer": "包含起点n，不包含终点m。不能修改已有字符串，可以创建一个改变后的新字符串。",
+      "key_facts": [
+        "including the first but excluding the last",
+        "strings are immutable, which means you can’t change an existing string"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h120",
+      "split": "holdout",
+      "question": "本章承诺相关代码在十万字符输入下耗时多少毫秒？",
+      "categories": [
+        "open_textbook",
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h121",
+      "split": "holdout",
+      "question": "本章对应课程的期末考试具体是哪一天？",
+      "categories": [
+        "open_textbook",
+        "no_answer",
+        "hard_negative"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h130",
+      "split": "holdout",
+      "question": "banana有六个字符，为何用索引6取最后字符会错？",
+      "categories": [
+        "open_textbook",
+        "exercise",
+        "long_passage"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.2 len:the six le",
+          "document": "book_holdout",
+          "section": "8.2 len",
+          "quote": "the six letters are numbered 0 to 5",
+          "subquestion": "8.2 len"
+        }
+      ],
+      "reference_answer": "从0计数，索引为0到5，应取length-1。",
+      "key_facts": [
+        "the six letters are numbered 0 to 5"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "h131",
+      "split": "holdout",
+      "question": "fruit[-1]与fruit[-2]分别得到哪个字符位置？",
+      "categories": [
+        "open_textbook",
+        "exercise",
+        "long_passage"
+      ],
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "book_holdout"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "book_holdout:8.2 len:fruit[-1] ",
+          "document": "book_holdout",
+          "section": "8.2 len",
+          "quote": "fruit[-1] yields the last letter",
+          "subquestion": "8.2 len"
+        }
+      ],
+      "reference_answer": "分别得到最后一个和倒数第二个字符。",
+      "key_facts": [
+        "fruit[-1] yields the last letter"
+      ],
+      "annotation_status": "authored_from_source_pending_human_review",
+      "human_review": "pending"
+    }
+  ],
+  "textbook_manifest": [
+    {
+      "key": "book_dev",
+      "url": "https://www.greenteapress.com/thinkpython2/html/thinkpython2005.html",
+      "raw_sha256": "b9477f3bbd8c6712a8b6fcc449d8db8694fb88215f721cc5a5b53cd74a2f960d",
+      "text_sha256": "1ff82dbe16807b848a6359d14161a4c066f3ba0fca96ad8cb73bb5cc4e016e20",
+      "license": "CC-BY-NC-3.0",
+      "author": "Allen B. Downey"
+    },
+    {
+      "key": "book_holdout",
+      "url": "https://www.greenteapress.com/thinkpython2/html/thinkpython2009.html",
+      "raw_sha256": "970beb4645effb2d4a5fa85acfc746ad96b93fe043ed39e99ae7dadc114f9698",
+      "text_sha256": "53e4d3663507d740acbbd9100ce00d5c68573efce4fb42726862eb1074781187",
+      "license": "CC-BY-NC-3.0",
+      "author": "Allen B. Downey"
+    }
+  ]
+}

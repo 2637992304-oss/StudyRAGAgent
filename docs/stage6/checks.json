@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-25",
+  "backend": {
+    "passed": 276,
+    "failed": 0,
+    "warnings": 1,
+    "warning": "Starlette/AnyIO deprecation"
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "build": "passed",
+    "browser_mock_passed": 29,
+    "browser_opt_in_skipped": 7,
+    "container_browser_live": "passed",
+    "restored_browser_live": "passed"
+  },
+  "deployment": {
+    "empty_database_migration": "0007_session_titles",
+    "services_healthy": true,
+    "real_embedding": "BAAI/bge-small-zh-v1.5 / 512",
+    "real_llm_course_qa": "passed; one generated note/question only",
+    "restart_persistence": "passed",
+    "isolated_backup_restore": "passed",
+    "original_file_sha256_match": true,
+    "restored_search_and_citations": "passed",
+    "populated_target_refused": true,
+    "runtime_image_private_content_check": "passed",
+    "alembic_check": "passed"
+  },
+  "limits": [
+    "Bounded generated sample; not a model quality benchmark",
+    "Historical initial failures retained locally",
+    "External Tavily/private GitHub acceptance not rerun",
+    "Remote CI and clean clone verification pending at initial push"
+  ]
+}

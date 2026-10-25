@@ -1,0 +1,210 @@
+{
+  "version": "stage3-layout-v1",
+  "license": "CC0-1.0",
+  "documents": [
+    {
+      "key": "mixed",
+      "file": "mixed_scan.pdf",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0",
+      "authored_original_facts": "第1页资料编号MIXED-2026。第2页缓存TTL为47秒，超时后必须重新验证缓存。"
+    },
+    {
+      "key": "layout",
+      "file": "complex_layout.pdf",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "license": "CC0-1.0",
+      "authored_original_facts": "第1页甲课程最大重试3次，乙课程最大重试7次。表中A11为3，B22为7，表头不计，共2条数据。公式S_n=n*(a_1+a_n)/2。"
+    }
+  ],
+  "cases": [
+    {
+      "id": "layout0",
+      "split": "holdout",
+      "categories": [
+        "mixed_scan"
+      ],
+      "question": "混合文档扫描页中缓存TTL是多少秒？",
+      "answerable": true,
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "mixed"
+        ]
+      },
+      "expected": [
+        {
+          "unit": "layout:0",
+          "document": "mixed",
+          "page": 2,
+          "quote": "缓存 TTL 为47 秒。",
+          "subquestion": "主问题"
+        }
+      ],
+      "reference_answer": "47秒",
+      "key_facts": [
+        "47秒"
+      ],
+      "annotation_status": "programmatic_from_authored_pdf_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "layout1",
+      "split": "holdout",
+      "categories": [
+        "mixed_scan"
+      ],
+      "question": "缓存超时后需要做什么？",
+      "answerable": true,
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "mixed"
+        ]
+      },
+      "expected": [
+        {
+          "unit": "layout:1",
+          "document": "mixed",
+          "page": 2,
+          "quote": "超时后必须重新验证缓存。",
+          "subquestion": "主问题"
+        }
+      ],
+      "reference_answer": "重新验证缓存",
+      "key_facts": [
+        "重新验证缓存"
+      ],
+      "annotation_status": "programmatic_from_authored_pdf_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "layout2",
+      "split": "holdout",
+      "categories": [
+        "complex_layout"
+      ],
+      "question": "双栏资料中甲课程和乙课程各允许重试多少次？",
+      "answerable": true,
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "layout"
+        ]
+      },
+      "expected": [
+        {
+          "unit": "layout:2",
+          "document": "layout",
+          "page": 1,
+          "quote": "甲课程最大重试次数为 3。",
+          "subquestion": "主问题"
+        },
+        {
+          "unit": "layout:2b",
+          "document": "layout",
+          "page": 1,
+          "quote": "乙课程最大重试次数为 7。",
+          "subquestion": "乙课程"
+        }
+      ],
+      "reference_answer": "甲3次，乙7次",
+      "key_facts": [
+        "甲3次，乙7次"
+      ],
+      "annotation_status": "programmatic_from_authored_pdf_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "layout3",
+      "split": "holdout",
+      "categories": [
+        "complex_layout"
+      ],
+      "question": "配置表里B22对应的retry_limit是多少？",
+      "answerable": true,
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "layout"
+        ]
+      },
+      "expected": [
+        {
+          "unit": "layout:3",
+          "document": "layout",
+          "page": 1,
+          "quote": "B22",
+          "subquestion": "主问题"
+        }
+      ],
+      "reference_answer": "7",
+      "key_facts": [
+        "7"
+      ],
+      "annotation_status": "programmatic_from_authored_pdf_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "layout4",
+      "split": "holdout",
+      "categories": [
+        "complex_layout"
+      ],
+      "question": "等差数列求和公式中的除数是多少？",
+      "answerable": true,
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "layout"
+        ]
+      },
+      "expected": [
+        {
+          "unit": "layout:4",
+          "document": "layout",
+          "page": 1,
+          "quote": "S_n = n * (a_1 + a_n) / 2",
+          "subquestion": "主问题"
+        }
+      ],
+      "reference_answer": "2",
+      "key_facts": [
+        "2"
+      ],
+      "annotation_status": "programmatic_from_authored_pdf_pending_human_review",
+      "human_review": "pending"
+    },
+    {
+      "id": "layout_no_answer",
+      "split": "holdout",
+      "categories": [
+        "no_answer",
+        "hard_negative"
+      ],
+      "question": "乙课程的重试间隔承诺是多少毫秒？",
+      "answerable": false,
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "layout"
+        ]
+      },
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [],
+      "annotation_status": "programmatic_from_authored_pdf_pending_human_review",
+      "human_review": "pending"
+    }
+  ]
+}

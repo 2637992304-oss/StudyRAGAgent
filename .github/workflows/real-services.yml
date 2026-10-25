@@ -1,0 +1,42 @@
+name: Manual real-service smoke
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      COMPOSE_PROJECT_NAME: studyrag-real-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install httpx==0.28.1
+      - name: Prepare private runtime configuration
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, secrets
+          assert os.environ['LLM_API_KEY'], 'Configure repository secret LLM_API_KEY first'
+          text = pathlib.Path('.env.example').read_text()
+          values = {'LLM_API_KEY': os.environ['LLM_API_KEY'],
+                    'LLM_BASE_URL': os.environ['LLM_BASE_URL'] or 'https://api.deepseek.com',
+                    'LLM_MODEL': os.environ['LLM_MODEL'] or 'deepseek-flash',
+                    'AUTH_SECRET': secrets.token_hex(32)}
+          lines = [line for line in text.splitlines() if line.split('=',1)[0] not in values]
+          for key, value in values.items():
+              assert '\n' not in value and '\r' not in value
+              lines.append(key + '=' + value)
+          pathlib.Path('.env').write_text('\n'.join(lines)+'\n')
+          PY
+      - run: docker compose --profile app up -d --build --wait
+      - run: python backend/scripts/smoke_stage6.py create --state .runtime/real-state.json
+      - run: python backend/scripts/smoke_stage6.py delete --state .runtime/real-state.json
+      - if: always()
+        run: docker compose --profile app down -v

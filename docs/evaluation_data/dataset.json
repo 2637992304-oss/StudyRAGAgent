@@ -1,0 +1,1903 @@
+{
+  "version": "stage3-v1",
+  "license": "CC0-1.0",
+  "provenance": "Authored synthetic educational fixtures; not user documents.",
+  "documents": [
+    {
+      "key": "database",
+      "file": "database.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "transaction",
+      "file": "transaction.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "index",
+      "file": "index.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "network",
+      "file": "network.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "cache",
+      "file": "cache.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "algorithm",
+      "file": "algorithm.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "isolation",
+      "file": "isolation.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "security",
+      "file": "security.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "retrieval",
+      "file": "retrieval.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "chunking",
+      "file": "chunking.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "foreign",
+      "file": "foreign.md",
+      "owner": "b",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "other_course",
+      "file": "other_course.md",
+      "owner": "a",
+      "course": "other",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "excluded",
+      "file": "excluded.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "failed",
+      "file": "failed.md",
+      "owner": "a",
+      "course": "main",
+      "status": "failed",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "deleted",
+      "file": "deleted.md",
+      "owner": "a",
+      "course": "main",
+      "status": "deleted",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "table",
+      "file": "table.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    },
+    {
+      "key": "formula",
+      "file": "formula.md",
+      "owner": "a",
+      "course": "main",
+      "status": "ready",
+      "source": "self-authored CC0 synthetic course"
+    }
+  ],
+  "cases": [
+    {
+      "id": "q001",
+      "split": "dev",
+      "categories": [
+        "synonym"
+      ],
+      "question": "表里每条记录靠什么区分？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "database:definition",
+          "document": "database",
+          "section": "数据库定义",
+          "quote": "主键唯一标识表中的一行，且不能为 NULL。"
+        }
+      ],
+      "reference_answer": "主键唯一标识表中的一行，且不能为 NULL。",
+      "key_facts": [
+        "主键唯一标识表中的一行，且不能为 NULL。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q002",
+      "split": "holdout",
+      "categories": [
+        "synonym"
+      ],
+      "question": "一组数据库操作如何做到要么全成要么全撤？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "transaction:definition",
+          "document": "transaction",
+          "section": "事务定义",
+          "quote": "原子性表示一个事务的操作全部成功或全部回滚。"
+        }
+      ],
+      "reference_answer": "原子性表示一个事务的操作全部成功或全部回滚。",
+      "key_facts": [
+        "原子性表示一个事务的操作全部成功或全部回滚。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q003",
+      "split": "dev",
+      "categories": [
+        "synonym"
+      ],
+      "question": "怎样加速按数值区间查找？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "index:definition",
+          "document": "index",
+          "section": "索引定义",
+          "quote": "B_tree 索引按键有序组织数据，支持范围查找。"
+        }
+      ],
+      "reference_answer": "B_tree 索引按键有序组织数据，支持范围查找。",
+      "key_facts": [
+        "B_tree 索引按键有序组织数据，支持范围查找。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q004",
+      "split": "holdout",
+      "categories": [
+        "synonym"
+      ],
+      "question": "哪种协议能保证字节按顺序送到？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "network:definition",
+          "document": "network",
+          "section": "网络定义",
+          "quote": "TCP 提供可靠且有序的字节流传输。"
+        }
+      ],
+      "reference_answer": "TCP 提供可靠且有序的字节流传输。",
+      "key_facts": [
+        "TCP 提供可靠且有序的字节流传输。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q005",
+      "split": "dev",
+      "categories": [
+        "synonym"
+      ],
+      "question": "缓存满了，最久没被访问的数据该如何处理？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "cache:definition",
+          "document": "cache",
+          "section": "缓存定义",
+          "quote": "LRU 在容量不足时淘汰最近最少使用的条目。"
+        }
+      ],
+      "reference_answer": "LRU 在容量不足时淘汰最近最少使用的条目。",
+      "key_facts": [
+        "LRU 在容量不足时淘汰最近最少使用的条目。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q006",
+      "split": "holdout",
+      "categories": [
+        "synonym"
+      ],
+      "question": "把查找范围反复折半前，数据需要满足什么条件？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "algorithm:definition",
+          "document": "algorithm",
+          "section": "算法定义",
+          "quote": "二分查找要求输入序列已经有序。"
+        }
+      ],
+      "reference_answer": "二分查找要求输入序列已经有序。",
+      "key_facts": [
+        "二分查找要求输入序列已经有序。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q007",
+      "split": "dev",
+      "categories": [
+        "synonym"
+      ],
+      "question": "怎样避免读到别人还没提交的修改？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "isolation:definition",
+          "document": "isolation",
+          "section": "隔离定义",
+          "quote": "读已提交隔离级别禁止读取其他事务尚未提交的数据。"
+        }
+      ],
+      "reference_answer": "读已提交隔离级别禁止读取其他事务尚未提交的数据。",
+      "key_facts": [
+        "读已提交隔离级别禁止读取其他事务尚未提交的数据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q008",
+      "split": "holdout",
+      "categories": [
+        "synonym"
+      ],
+      "question": "用户口令怎样保存更合适？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "security:definition",
+          "document": "security",
+          "section": "安全定义",
+          "quote": "密码应保存带随机盐的不可逆哈希，而非明文。"
+        }
+      ],
+      "reference_answer": "密码应保存带随机盐的不可逆哈希，而非明文。",
+      "key_facts": [
+        "密码应保存带随机盐的不可逆哈希，而非明文。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q009",
+      "split": "dev",
+      "categories": [
+        "synonym"
+      ],
+      "question": "应该找到的证据里实际找到了多少，用什么衡量？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "retrieval:definition",
+          "document": "retrieval",
+          "section": "检索定义",
+          "quote": "Recall 表示相关证据中被检索到的比例。"
+        }
+      ],
+      "reference_answer": "Recall 表示相关证据中被检索到的比例。",
+      "key_facts": [
+        "Recall 表示相关证据中被检索到的比例。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q010",
+      "split": "holdout",
+      "categories": [
+        "synonym"
+      ],
+      "question": "资料切开之后，如何保留交界处的语义？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "chunking:definition",
+          "document": "chunking",
+          "section": "切块定义",
+          "quote": "切块重叠用于保留相邻片段边界的上下文。"
+        }
+      ],
+      "reference_answer": "切块重叠用于保留相邻片段边界的上下文。",
+      "key_facts": [
+        "切块重叠用于保留相邻片段边界的上下文。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q011",
+      "split": "dev",
+      "categories": [
+        "term"
+      ],
+      "question": "primary_key 可以为 NULL 吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "database:definition",
+          "document": "database",
+          "section": "数据库定义",
+          "quote": "主键唯一标识表中的一行，且不能为 NULL。"
+        }
+      ],
+      "reference_answer": "主键唯一标识表中的一行，且不能为 NULL。",
+      "key_facts": [
+        "主键唯一标识表中的一行，且不能为 NULL。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q012",
+      "split": "holdout",
+      "categories": [
+        "term"
+      ],
+      "question": "ACID 中的 durability 指什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "transaction:extra",
+          "document": "transaction",
+          "section": "事务补充",
+          "quote": "持久性表示事务提交后，其结果不会因进程退出而丢失。"
+        }
+      ],
+      "reference_answer": "持久性表示事务提交后，其结果不会因进程退出而丢失。",
+      "key_facts": [
+        "持久性表示事务提交后，其结果不会因进程退出而丢失。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q013",
+      "split": "dev",
+      "categories": [
+        "term"
+      ],
+      "question": "B_tree 为什么适合 range query？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "index:definition",
+          "document": "index",
+          "section": "索引定义",
+          "quote": "B_tree 索引按键有序组织数据，支持范围查找。"
+        }
+      ],
+      "reference_answer": "B_tree 索引按键有序组织数据，支持范围查找。",
+      "key_facts": [
+        "B_tree 索引按键有序组织数据，支持范围查找。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q014",
+      "split": "holdout",
+      "categories": [
+        "term"
+      ],
+      "question": "UDP 是否保证 delivery？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "network:extra",
+          "document": "network",
+          "section": "网络补充",
+          "quote": "UDP 不保证报文到达或到达顺序。"
+        }
+      ],
+      "reference_answer": "UDP 不保证报文到达或到达顺序。",
+      "key_facts": [
+        "UDP 不保证报文到达或到达顺序。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q015",
+      "split": "dev",
+      "categories": [
+        "term"
+      ],
+      "question": "TTL 到期后条目是否有效？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "cache:extra",
+          "document": "cache",
+          "section": "缓存补充",
+          "quote": "TTL 是缓存条目的生存时间，过期后应失效。"
+        }
+      ],
+      "reference_answer": "TTL 是缓存条目的生存时间，过期后应失效。",
+      "key_facts": [
+        "TTL 是缓存条目的生存时间，过期后应失效。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q016",
+      "split": "holdout",
+      "categories": [
+        "term"
+      ],
+      "question": "binary_search 的 complexity 是多少？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "algorithm:extra",
+          "document": "algorithm",
+          "section": "算法补充",
+          "quote": "二分查找的时间复杂度为 O(log_n)。"
+        }
+      ],
+      "reference_answer": "二分查找的时间复杂度为 O(log_n)。",
+      "key_facts": [
+        "二分查找的时间复杂度为 O(log_n)。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q017",
+      "split": "dev",
+      "categories": [
+        "term"
+      ],
+      "question": "read_committed 允许 dirty_read 吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "isolation:definition",
+          "document": "isolation",
+          "section": "隔离定义",
+          "quote": "读已提交隔离级别禁止读取其他事务尚未提交的数据。"
+        }
+      ],
+      "reference_answer": "读已提交隔离级别禁止读取其他事务尚未提交的数据。",
+      "key_facts": [
+        "读已提交隔离级别禁止读取其他事务尚未提交的数据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q018",
+      "split": "holdout",
+      "categories": [
+        "term"
+      ],
+      "question": "least_privilege 如何分配权限？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "security:extra",
+          "document": "security",
+          "section": "安全补充",
+          "quote": "最小权限原则要求账号只获得完成工作所需的权限。"
+        }
+      ],
+      "reference_answer": "最小权限原则要求账号只获得完成工作所需的权限。",
+      "key_facts": [
+        "最小权限原则要求账号只获得完成工作所需的权限。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q019",
+      "split": "dev",
+      "categories": [
+        "term"
+      ],
+      "question": "Precision 的分母是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "retrieval:extra",
+          "document": "retrieval",
+          "section": "检索补充",
+          "quote": "Precision 表示检索结果中相关证据所占的比例。"
+        }
+      ],
+      "reference_answer": "Precision 表示检索结果中相关证据所占的比例。",
+      "key_facts": [
+        "Precision 表示检索结果中相关证据所占的比例。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q020",
+      "split": "holdout",
+      "categories": [
+        "term"
+      ],
+      "question": "chunk_overlap 的作用是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "chunking:definition",
+          "document": "chunking",
+          "section": "切块定义",
+          "quote": "切块重叠用于保留相邻片段边界的上下文。"
+        }
+      ],
+      "reference_answer": "切块重叠用于保留相邻片段边界的上下文。",
+      "key_facts": [
+        "切块重叠用于保留相邻片段边界的上下文。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q021",
+      "split": "dev",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：两行能使用相同的主键吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "database:exercise",
+          "document": "database",
+          "section": "数据库练习",
+          "quote": "不能，主键必须唯一。"
+        }
+      ],
+      "reference_answer": "不能，主键必须唯一。",
+      "key_facts": [
+        "不能，主键必须唯一。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q022",
+      "split": "holdout",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：转账扣款成功但入账失败，应怎样处理该事务？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "transaction:exercise",
+          "document": "transaction",
+          "section": "事务练习",
+          "quote": "全部回滚。"
+        }
+      ],
+      "reference_answer": "全部回滚。",
+      "key_facts": [
+        "全部回滚。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q023",
+      "split": "dev",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：索引会完全没有写入成本吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "index:exercise",
+          "document": "index",
+          "section": "索引练习",
+          "quote": "不会，索引增加写入维护开销。"
+        }
+      ],
+      "reference_answer": "不会，索引增加写入维护开销。",
+      "key_facts": [
+        "不会，索引增加写入维护开销。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q024",
+      "split": "holdout",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：资料要求传输可靠且有序，应选 TCP 还是 UDP？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "network:exercise",
+          "document": "network",
+          "section": "网络练习",
+          "quote": "TCP。"
+        }
+      ],
+      "reference_answer": "TCP。",
+      "key_facts": [
+        "TCP。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q025",
+      "split": "dev",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：LRU 缓存满时，应淘汰刚刚访问的条目吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "cache:exercise",
+          "document": "cache",
+          "section": "缓存练习",
+          "quote": "不应，淘汰最近最少使用的条目。"
+        }
+      ],
+      "reference_answer": "不应，淘汰最近最少使用的条目。",
+      "key_facts": [
+        "不应，淘汰最近最少使用的条目。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q026",
+      "split": "holdout",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：能直接对无序数组使用二分查找吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "algorithm:exercise",
+          "document": "algorithm",
+          "section": "算法练习",
+          "quote": "不能，必须先保证有序。"
+        }
+      ],
+      "reference_answer": "不能，必须先保证有序。",
+      "key_facts": [
+        "不能，必须先保证有序。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q027",
+      "split": "dev",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：读已提交能否读取其他事务的未提交更新？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "isolation:exercise",
+          "document": "isolation",
+          "section": "隔离练习",
+          "quote": "不能。"
+        }
+      ],
+      "reference_answer": "不能。",
+      "key_facts": [
+        "不能。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q028",
+      "split": "holdout",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：数据库中应直接保存用户明文密码吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "security:exercise",
+          "document": "security",
+          "section": "安全练习",
+          "quote": "不应，应保存带随机盐的哈希。"
+        }
+      ],
+      "reference_answer": "不应，应保存带随机盐的哈希。",
+      "key_facts": [
+        "不应，应保存带随机盐的哈希。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q029",
+      "split": "dev",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：应召回四条证据，实际召回三条，Recall 是多少？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "retrieval:exercise",
+          "document": "retrieval",
+          "section": "检索练习",
+          "quote": "3/4，即 0.75。"
+        }
+      ],
+      "reference_answer": "3/4，即 0.75。",
+      "key_facts": [
+        "3/4，即 0.75。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q030",
+      "split": "holdout",
+      "categories": [
+        "exercise"
+      ],
+      "question": "试题：将表头和每个单元格分别切成孤立片段合适吗？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "chunking:exercise",
+          "document": "chunking",
+          "section": "切块练习",
+          "quote": "不合适，会破坏表格语义。"
+        }
+      ],
+      "reference_answer": "不合适，会破坏表格语义。",
+      "key_facts": [
+        "不合适，会破坏表格语义。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q031",
+      "split": "dev",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明数据库定义和索引补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "database:definition",
+          "document": "database",
+          "section": "数据库定义",
+          "quote": "主键唯一标识表中的一行，且不能为 NULL。"
+        },
+        {
+          "unit": "index:extra",
+          "document": "index",
+          "section": "索引补充",
+          "quote": "索引需要额外存储，并增加写入时的维护开销。"
+        }
+      ],
+      "reference_answer": "主键唯一标识表中的一行，且不能为 NULL。索引需要额外存储，并增加写入时的维护开销。",
+      "key_facts": [
+        "主键唯一标识表中的一行，且不能为 NULL。",
+        "索引需要额外存储，并增加写入时的维护开销。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q032",
+      "split": "holdout",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明事务定义和网络补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "transaction:definition",
+          "document": "transaction",
+          "section": "事务定义",
+          "quote": "原子性表示一个事务的操作全部成功或全部回滚。"
+        },
+        {
+          "unit": "network:extra",
+          "document": "network",
+          "section": "网络补充",
+          "quote": "UDP 不保证报文到达或到达顺序。"
+        }
+      ],
+      "reference_answer": "原子性表示一个事务的操作全部成功或全部回滚。UDP 不保证报文到达或到达顺序。",
+      "key_facts": [
+        "原子性表示一个事务的操作全部成功或全部回滚。",
+        "UDP 不保证报文到达或到达顺序。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q033",
+      "split": "dev",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明索引定义和缓存补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "index:definition",
+          "document": "index",
+          "section": "索引定义",
+          "quote": "B_tree 索引按键有序组织数据，支持范围查找。"
+        },
+        {
+          "unit": "cache:extra",
+          "document": "cache",
+          "section": "缓存补充",
+          "quote": "TTL 是缓存条目的生存时间，过期后应失效。"
+        }
+      ],
+      "reference_answer": "B_tree 索引按键有序组织数据，支持范围查找。TTL 是缓存条目的生存时间，过期后应失效。",
+      "key_facts": [
+        "B_tree 索引按键有序组织数据，支持范围查找。",
+        "TTL 是缓存条目的生存时间，过期后应失效。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q034",
+      "split": "holdout",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明网络定义和算法补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "network:definition",
+          "document": "network",
+          "section": "网络定义",
+          "quote": "TCP 提供可靠且有序的字节流传输。"
+        },
+        {
+          "unit": "algorithm:extra",
+          "document": "algorithm",
+          "section": "算法补充",
+          "quote": "二分查找的时间复杂度为 O(log_n)。"
+        }
+      ],
+      "reference_answer": "TCP 提供可靠且有序的字节流传输。二分查找的时间复杂度为 O(log_n)。",
+      "key_facts": [
+        "TCP 提供可靠且有序的字节流传输。",
+        "二分查找的时间复杂度为 O(log_n)。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q035",
+      "split": "dev",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明缓存定义和隔离补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "cache:definition",
+          "document": "cache",
+          "section": "缓存定义",
+          "quote": "LRU 在容量不足时淘汰最近最少使用的条目。"
+        },
+        {
+          "unit": "isolation:extra",
+          "document": "isolation",
+          "section": "隔离补充",
+          "quote": "可重复读要求同一事务重复读取同一行时结果保持一致。"
+        }
+      ],
+      "reference_answer": "LRU 在容量不足时淘汰最近最少使用的条目。可重复读要求同一事务重复读取同一行时结果保持一致。",
+      "key_facts": [
+        "LRU 在容量不足时淘汰最近最少使用的条目。",
+        "可重复读要求同一事务重复读取同一行时结果保持一致。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q036",
+      "split": "holdout",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明算法定义和安全补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "algorithm:definition",
+          "document": "algorithm",
+          "section": "算法定义",
+          "quote": "二分查找要求输入序列已经有序。"
+        },
+        {
+          "unit": "security:extra",
+          "document": "security",
+          "section": "安全补充",
+          "quote": "最小权限原则要求账号只获得完成工作所需的权限。"
+        }
+      ],
+      "reference_answer": "二分查找要求输入序列已经有序。最小权限原则要求账号只获得完成工作所需的权限。",
+      "key_facts": [
+        "二分查找要求输入序列已经有序。",
+        "最小权限原则要求账号只获得完成工作所需的权限。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q037",
+      "split": "dev",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明隔离定义和检索补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "isolation:definition",
+          "document": "isolation",
+          "section": "隔离定义",
+          "quote": "读已提交隔离级别禁止读取其他事务尚未提交的数据。"
+        },
+        {
+          "unit": "retrieval:extra",
+          "document": "retrieval",
+          "section": "检索补充",
+          "quote": "Precision 表示检索结果中相关证据所占的比例。"
+        }
+      ],
+      "reference_answer": "读已提交隔离级别禁止读取其他事务尚未提交的数据。Precision 表示检索结果中相关证据所占的比例。",
+      "key_facts": [
+        "读已提交隔离级别禁止读取其他事务尚未提交的数据。",
+        "Precision 表示检索结果中相关证据所占的比例。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q038",
+      "split": "holdout",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明安全定义和切块补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "security:definition",
+          "document": "security",
+          "section": "安全定义",
+          "quote": "密码应保存带随机盐的不可逆哈希，而非明文。"
+        },
+        {
+          "unit": "chunking:extra",
+          "document": "chunking",
+          "section": "切块补充",
+          "quote": "片段过小可能拆散表头和数据，造成证据语义不完整。"
+        }
+      ],
+      "reference_answer": "密码应保存带随机盐的不可逆哈希，而非明文。片段过小可能拆散表头和数据，造成证据语义不完整。",
+      "key_facts": [
+        "密码应保存带随机盐的不可逆哈希，而非明文。",
+        "片段过小可能拆散表头和数据，造成证据语义不完整。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q039",
+      "split": "dev",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明检索定义和数据库补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "retrieval:definition",
+          "document": "retrieval",
+          "section": "检索定义",
+          "quote": "Recall 表示相关证据中被检索到的比例。"
+        },
+        {
+          "unit": "database:extra",
+          "document": "database",
+          "section": "数据库补充",
+          "quote": "外键引用另一张表的键，用于维护参照完整性。"
+        }
+      ],
+      "reference_answer": "Recall 表示相关证据中被检索到的比例。外键引用另一张表的键，用于维护参照完整性。",
+      "key_facts": [
+        "Recall 表示相关证据中被检索到的比例。",
+        "外键引用另一张表的键，用于维护参照完整性。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q040",
+      "split": "holdout",
+      "categories": [
+        "multi_evidence"
+      ],
+      "question": "分别说明切块定义和事务补充中的核心结论。",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": null
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "chunking:definition",
+          "document": "chunking",
+          "section": "切块定义",
+          "quote": "切块重叠用于保留相邻片段边界的上下文。"
+        },
+        {
+          "unit": "transaction:extra",
+          "document": "transaction",
+          "section": "事务补充",
+          "quote": "持久性表示事务提交后，其结果不会因进程退出而丢失。"
+        }
+      ],
+      "reference_answer": "切块重叠用于保留相邻片段边界的上下文。持久性表示事务提交后，其结果不会因进程退出而丢失。",
+      "key_facts": [
+        "切块重叠用于保留相邻片段边界的上下文。",
+        "持久性表示事务提交后，其结果不会因进程退出而丢失。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q041",
+      "split": "dev",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "数据库课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q042",
+      "split": "holdout",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "事务课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "transaction"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q043",
+      "split": "dev",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "索引课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "index"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q044",
+      "split": "holdout",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "网络课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "network"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q045",
+      "split": "dev",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "缓存课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "cache"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q046",
+      "split": "holdout",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "算法课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "algorithm"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q047",
+      "split": "dev",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "隔离课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "isolation"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q048",
+      "split": "holdout",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "安全课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "security"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q049",
+      "split": "dev",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "检索课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "retrieval"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q050",
+      "split": "holdout",
+      "categories": [
+        "no_answer"
+      ],
+      "question": "切块课程下次考试的具体日期是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "chunking"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q051",
+      "split": "dev",
+      "categories": [
+        "boundary"
+      ],
+      "question": "foreign 专属答案的琥珀编号是多少？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "foreign"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "foreign"
+    },
+    {
+      "id": "q052",
+      "split": "holdout",
+      "categories": [
+        "boundary"
+      ],
+      "question": "foreign 专属答案的实验室在哪里？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "foreign"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "foreign"
+    },
+    {
+      "id": "q053",
+      "split": "dev",
+      "categories": [
+        "boundary"
+      ],
+      "question": "other_course 专属答案的琥珀编号是多少？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "other_course"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "other_course"
+    },
+    {
+      "id": "q054",
+      "split": "holdout",
+      "categories": [
+        "boundary"
+      ],
+      "question": "other_course 专属答案的实验室在哪里？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "other_course"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "other_course"
+    },
+    {
+      "id": "q055",
+      "split": "dev",
+      "categories": [
+        "boundary"
+      ],
+      "question": "excluded 专属答案的琥珀编号是多少？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "excluded"
+    },
+    {
+      "id": "q056",
+      "split": "holdout",
+      "categories": [
+        "boundary"
+      ],
+      "question": "excluded 专属答案的实验室在哪里？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "excluded"
+    },
+    {
+      "id": "q057",
+      "split": "dev",
+      "categories": [
+        "boundary"
+      ],
+      "question": "failed 专属答案的琥珀编号是多少？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "failed"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "failed"
+    },
+    {
+      "id": "q058",
+      "split": "holdout",
+      "categories": [
+        "boundary"
+      ],
+      "question": "failed 专属答案的实验室在哪里？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "failed"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "failed"
+    },
+    {
+      "id": "q059",
+      "split": "dev",
+      "categories": [
+        "boundary"
+      ],
+      "question": "deleted 专属答案的琥珀编号是多少？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "deleted"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "deleted"
+    },
+    {
+      "id": "q060",
+      "split": "holdout",
+      "categories": [
+        "boundary"
+      ],
+      "question": "deleted 专属答案的实验室在哪里？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "database",
+          "deleted"
+        ]
+      },
+      "answerable": false,
+      "expected": [],
+      "reference_answer": "当前所选资料中没有足够依据。",
+      "key_facts": [
+        "当前所选资料中没有足够依据。"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending",
+      "boundary_kind": "deleted"
+    },
+    {
+      "id": "q061",
+      "split": "dev",
+      "categories": [
+        "table"
+      ],
+      "question": "course relation里面有多少个属性？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "table"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "table:schema",
+          "document": "table",
+          "section": "Schema",
+          "quote": "4 attributes"
+        }
+      ],
+      "reference_answer": "4",
+      "key_facts": [
+        "4"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q062",
+      "split": "holdout",
+      "categories": [
+        "table"
+      ],
+      "question": "course relation样本表里面有多少条数据？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "table"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "table:rows",
+          "document": "table",
+          "section": "Sample rows",
+          "quote": "3 rows"
+        }
+      ],
+      "reference_answer": "3",
+      "key_facts": [
+        "3"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    },
+    {
+      "id": "q063",
+      "split": "dev",
+      "categories": [
+        "formula"
+      ],
+      "question": "等差数列的求和公式是什么？",
+      "scope": {
+        "owner": "a",
+        "course": "main",
+        "documents": [
+          "formula"
+        ]
+      },
+      "answerable": true,
+      "expected": [
+        {
+          "unit": "formula:sum",
+          "document": "formula",
+          "section": "公式",
+          "quote": "S_n = n*(a_1+a_n)/2"
+        }
+      ],
+      "reference_answer": "S_n = n*(a_1+a_n)/2",
+      "key_facts": [
+        "S_n = n*(a_1+a_n)/2"
+      ],
+      "annotation_status": "programmatic_from_authored_fixture",
+      "human_review": "pending"
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+name: CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+psycopg://studyrag:studyrag_dev@localhost:5432/studyrag
+      REDIS_URL: redis://localhost:6379/0
+      AUTH_SECRET: ci-only-no-user-data
+      LLM_API_KEY: ""
+      TAVILY_API_KEY: ""
+      GITHUB_CREDENTIALS: "{}"
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: studyrag
+          POSTGRES_PASSWORD: studyrag_dev
+          POSTGRES_DB: studyrag
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U studyrag -d studyrag"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install uv==0.13.1
+      - run: uv sync --extra dev --extra ocr --frozen
+        working-directory: backend
+      - run: uv run ruff check . ../infra
+        working-directory: backend
+      - run: uv run ruff format --check . ../infra
+        working-directory: backend
+      - run: uv run alembic upgrade head
+        working-directory: backend
+      - run: uv run alembic check
+        working-directory: backend
+      - run: uv run pytest -q
+        working-directory: backend
+      - run: python infra/audit_public.py
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run typecheck && npm run build
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npx playwright test
+        working-directory: frontend
+
+  deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: studyrag-ci
+      IMAGE_TAG: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install httpx==0.28.1
+      - run: cp .env.example .env
+      - run: docker compose --profile app -f docker-compose.yml -f infra/compose.ci.yml config -q
+      - run: docker compose --profile app -f docker-compose.yml -f infra/compose.ci.yml up -d --build --wait
+      - run: python backend/scripts/smoke_stage6.py create --state .runtime/ci-state.json
+      - run: docker compose --profile app -f docker-compose.yml -f infra/compose.ci.yml restart api worker frontend
+      - run: docker compose --profile app -f docker-compose.yml -f infra/compose.ci.yml up -d --wait
+      - run: python backend/scripts/smoke_stage6.py verify --state .runtime/ci-state.json
+      - run: python infra/manage.py backup .runtime/ci-backup --project studyrag-ci
+      - run: python infra/manage.py restore .runtime/ci-backup --project studyrag-ci-restore
+        env:
+          POSTGRES_PORT: 55432
+          REDIS_PORT: 56379
+      - run: docker compose -p studyrag-ci-restore --profile app -f docker-compose.yml -f infra/compose.ci.yml up -d --wait
+        env:
+          POSTGRES_PORT: 55432
+          REDIS_PORT: 56379
+      - run: python backend/scripts/smoke_stage6.py verify --state .runtime/ci-state.json
+      - run: python backend/scripts/smoke_stage6.py delete --state .runtime/ci-state.json
+      - if: failure()
+        run: docker compose --profile app -f docker-compose.yml -f infra/compose.ci.yml ps -a
+      - if: always()
+        run: |
+          docker compose --profile app -f docker-compose.yml -f infra/compose.ci.yml down -v
+          docker compose -p studyrag-ci-restore --profile app -f docker-compose.yml -f infra/compose.ci.yml down -v
+

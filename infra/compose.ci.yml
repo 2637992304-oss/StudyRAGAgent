@@ -1,0 +1,31 @@
+# Only for isolated CI wiring tests. Never use with existing learning data.
+x-ci-env: &ci-env
+  LLM_BASE_URL: http://mock-llm:9000
+  LLM_API_KEY: ci-placeholder-no-real-key
+  LLM_MODEL: deterministic-ci
+  TAVILY_API_KEY: ""
+  GITHUB_CREDENTIALS: "{}"
+
+services:
+  migrate:
+    build:
+      target: test
+    environment: *ci-env
+  api:
+    environment: *ci-env
+    command: [python, /ci/start.py, api]
+    depends_on:
+      mock-llm:
+        condition: service_healthy
+  worker:
+    environment: *ci-env
+    command: [python, /ci/start.py, worker]
+  mock-llm:
+    profiles: [app]
+    image: studyrag-backend:${IMAGE_TAG:-local}
+    command: [python, /ci/mock_llm.py]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
