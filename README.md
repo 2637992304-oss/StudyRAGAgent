@@ -32,6 +32,41 @@ flowchart LR
 
 后端 Python 3.11+、FastAPI、SQLAlchemy 2、Alembic；前端 React 19、TypeScript、Vite、KaTeX。容器使用 Python 3.13 / Node 22。依赖由 `backend/uv.lock` 和 `frontend/package-lock.json` 固定。
 
+## 项目目录
+
+以下展示主要源码、部署配置与文档入口，省略依赖、缓存及本地运行数据。
+
+```text
+StudyRAGAgent/
+├── backend/                 # Python 后端
+│   ├── app/                 # 应用核心代码
+│   │   ├── api/             # HTTP 接口与对话流
+│   │   ├── core/            # 配置、认证与日志
+│   │   ├── db/              # 数据模型与数据库连接
+│   │   ├── ingestion/       # 资料解析与入库校验
+│   │   ├── providers/       # 模型、Embedding 与文件存储
+│   │   ├── workers/         # Celery 异步资料处理任务
+│   │   ├── agent.py         # LangGraph Agent 编排
+│   │   ├── retrieval.py     # 课程资料检索
+│   │   └── answer_review.py # 答案核验与有界修正
+│   ├── alembic/             # 数据库迁移
+│   ├── scripts/             # 评测、验收与辅助脚本
+│   ├── tests/               # 后端自动化测试
+│   └── pyproject.toml       # 后端依赖与工具配置
+├── frontend/                # React + TypeScript 前端
+│   ├── src/                 # 学习空间、资料管理与对话界面
+│   ├── e2e/                 # Playwright 浏览器测试
+│   └── package.json         # 前端依赖与运行命令
+├── infra/                   # 容器构建、代理及备份恢复工具
+├── docs/                    # 文档导航、评测资料与阶段验收报告
+├── .github/workflows/       # 持续集成与真实服务验证
+├── docker-compose.yml       # 本地服务编排
+├── .env.example             # 环境变量配置示例
+├── README.md                # 项目介绍与使用入口
+├── LICENSE                  # 项目代码许可
+└── THIRD_PARTY_NOTICES.md    # 第三方资源许可说明
+```
+
 ## 快速启动：完整容器环境
 
 需要 Git、Docker Desktop（Linux 容器）或 Docker Engine + Compose v2。初次构建需要下载基础镜像和依赖，首次资料处理需要下载中文 Embedding 模型。
