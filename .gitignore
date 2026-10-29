@@ -23,6 +23,7 @@ storage/
 
 # Local implementation planning; not part of the public project documentation.
 /TECHNICAL_IMPLEMENTATION_GUIDE.md
+/待优化清单.md
 
 
 # Isolated test directories used when an existing Windows pytest directory is locked.

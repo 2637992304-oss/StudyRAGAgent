@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import threading
 import time
 from uuid import UUID
 
@@ -10,8 +11,12 @@ from celery.signals import (
     before_task_publish,
     task_postrun,
     task_prerun,
+    worker_process_init,
+    worker_ready,
+    worker_shutdown,
+    worker_shutting_down,
 )
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -21,6 +26,7 @@ from app.db.session import get_engine
 from app.ingestion.parser import make_chunks, parse_document
 from app.providers.embeddings import embed_texts
 from app.providers.local_storage import LocalStorage
+from app.workers.recovery import Heartbeat, claim, live, locked_job
 
 logger = logging.getLogger(__name__)
 configure_logging()
@@ -67,25 +73,25 @@ def log_task_end(task_id=None, task=None, state=None, **kwargs):
         request_id.reset(token)
 
 
-def set_stage(job_id: str, stage: str, progress: int) -> bool:
+def set_stage(job_id: str, stage: str, progress: int, token: str) -> bool:
     logger.info("ingestion_stage", extra={"job_id": job_id, "status": stage})
     with Session(get_engine()) as db, db.begin():
-        job = db.get(IngestionJob, job_id)
-        if not job or job.status == "completed":
+        doc, job = locked_job(db, job_id)
+        if not live(job, token):
             return False
-        doc = db.get(Document, job.document_id)
-        if not doc or doc.active_job_id != job_id or doc.status == "deleting":
-            return False
-        job.status = "processing"
-        job.stage = stage
-        job.progress = progress
-        doc.status = "processing"
+        job.stage, job.progress = stage, progress
         return True
 
 
 def ingest_document(job_id: str) -> None:
-    if not set_stage(job_id, "parsing", 10):
+    token = claim(job_id)
+    if token is None:
         return
+    with Heartbeat(job_id, token):
+        _ingest_owned(job_id, token)
+
+
+def _ingest_owned(job_id, token):
     with Session(get_engine()) as db:
         job = db.get(IngestionJob, job_id)
         doc = db.get(Document, job.document_id) if job else None
@@ -96,24 +102,30 @@ def ingest_document(job_id: str) -> None:
         content = LocalStorage(get_settings().storage_dir).read(UUID(key))
         pair_headings = get_settings().ingestion_pair_headings
         pdf_layout = get_settings().ingestion_pdf_layout
-        chunks = make_chunks(
-            parse_document(filename, content),
-            pair_headings=pair_headings,
-            pdf_layout=pdf_layout,
+        parts = parse_document(filename, content)
+        warnings = getattr(parts, "warnings", [])
+        parser_version = getattr(
+            parts,
+            "version",
+            "stage4-vision-v1"
+            if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
+            else "stage3-v3-page-ocr",
         )
+        if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+            parser_version = ("stage4-vision-v1:" + get_settings().llm_model)[:40]
+        else:
+            parser_version += (":layout" if pdf_layout else "") + (
+                ":heads" if pair_headings else ""
+            )
+        chunks = make_chunks(parts, pair_headings=pair_headings, pdf_layout=pdf_layout)
         if not chunks:
             raise ValueError("解析结果为空")
-        if not set_stage(job_id, "embedding", 50):
+        if not set_stage(job_id, "embedding", 50, token):
             return
         vectors = embed_texts([chunk["text"] for chunk in chunks])
         with Session(get_engine()) as db, db.begin():
-            doc = db.scalar(
-                select(Document).where(Document.id == job.document_id).with_for_update()
-            )
-            if not doc or doc.active_job_id != job_id or doc.status == "deleting":
-                return
-            job = db.get(IngestionJob, job_id)
-            if job is None or job.status == "completed":
+            doc, job = locked_job(db, job_id)
+            if not live(job, token):
                 return
             db.execute(delete(Chunk).where(Chunk.document_id == doc.id))
             for index, (chunk, vector) in enumerate(zip(chunks, vectors, strict=True)):
@@ -125,45 +137,63 @@ def ingest_document(job_id: str) -> None:
                         chunk_index=index,
                         content_hash=hashlib.sha256(chunk["text"].encode()).hexdigest(),
                         embedding_model=get_settings().embedding_model,
-                        parser_version=("stage4-vision-v1:" + get_settings().llm_model)[
-                            :40
-                        ]
-                        if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
-                        else "stage3-v4-pdf-layout"
-                        if pdf_layout and filename.lower().endswith(".pdf")
-                        else "stage3-v3-heading-pairs"
-                        if pair_headings
-                        else "stage3-v3-page-ocr",
+                        parser_version=parser_version,
                         embedding=vector,
                         **chunk,
                     )
                 )
-            job.status = "completed"
-            job.stage = "completed"
-            job.progress = 100
-            job.error = None
+            job.status = job.stage = "completed"
+            job.progress, job.error = 100, None
+            job.execution_token = job.lease_until = None
             doc.status = "ready"
+            doc.parse_warnings, doc.parser_version = warnings, parser_version
+            doc.parse_quality = "partial" if warnings else "extracted"
     except Exception as exc:
         logger.error("Ingestion failed job=%s type=%s", job_id, type(exc).__name__)
         with Session(get_engine()) as db, db.begin():
-            job = db.get(IngestionJob, job_id)
-            if job:
-                doc = db.scalar(
-                    select(Document)
-                    .where(Document.id == job.document_id)
-                    .with_for_update()
-                )
-                if doc and doc.active_job_id == job_id and doc.status != "deleting":
-                    job.status = "failed"
-                    job.stage = "failed"
-                    job.error = (
-                        "图片识别失败，请检查模型配置或重试"
-                        if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
-                        else str(exc)[:1000]
-                    )
-                    doc.status = "failed"
+            doc, job = locked_job(db, job_id)
+            if live(job, token):
+                job.status = job.stage = doc.status = "failed"
+                job.error = "资料处理失败，请检查格式、OCR或模型配置后重试"
+                job.execution_token = job.lease_until = None
+                doc.parse_quality = "failed"
+                doc.parse_warnings = getattr(exc, "warnings", [])
+                doc.parser_version = getattr(exc, "version", None)
 
 
 @celery_app.task(name="studyrag.ingest")
 def ingest_task(job_id: str) -> None:
     ingest_document(job_id)
+
+
+_RECOVERY_STOP = threading.Event()
+_RECOVERY_THREAD = None
+
+
+@worker_process_init.connect
+def reset_child_connections(**kwargs):
+    # Recovery runs in the parent; replacement prefork children need their own pool.
+    get_engine().dispose(close=False)
+    get_engine.cache_clear()
+
+
+@worker_ready.connect
+def start_recovery(**kwargs):
+    global _RECOVERY_THREAD
+    if _RECOVERY_THREAD is not None and _RECOVERY_THREAD.is_alive():
+        return
+    from app.workers.recovery import run
+
+    _RECOVERY_STOP.clear()
+    _RECOVERY_THREAD = threading.Thread(
+        target=run, args=(_RECOVERY_STOP,), daemon=True, name="ingestion-recovery"
+    )
+    _RECOVERY_THREAD.start()
+
+
+@worker_shutting_down.connect
+@worker_shutdown.connect
+def stop_recovery(**kwargs):
+    _RECOVERY_STOP.set()
+    if _RECOVERY_THREAD is not None:
+        _RECOVERY_THREAD.join(timeout=5)

@@ -8,7 +8,7 @@ import './auto-tools.css'
 import { cancelChat, revokeRepository, updateChatSession } from './api'
 import { Icon } from './Icons'
 import { readThinking, rememberThinking, thinkingLabel } from './thinking'
-import { askChat, attachmentBlob, chatMessages, createChatSession, deleteAttachment, documentImageBlob, listAttachments, openDocument, saveAttachment, uploadAttachment, type Attachment, type ChatMessage, type ChatSession, type Citation, type Document } from './api'
+import { askChat, attachmentBlob, chatMessagePage, createChatSession, deleteAttachment, documentImageBlob, listAttachments, openDocument, saveAttachment, uploadAttachment, type Attachment, type ChatMessage, type ChatSession, type Citation, type Document } from './api'
 
 type MarkdownNode = { type: string; value?: string; url?: string; children?: MarkdownNode[] }
 function citationPlugin(citations: Citation[]) {
@@ -84,10 +84,25 @@ type ChatProps = {
 function readDraft(key: string) {
   try { return sessionStorage.getItem(key) ?? '' } catch { return '' }
 }
+function messageOrder(a: ChatMessage, b: ChatMessage) {
+  const milliseconds = Date.parse(a.created_at) - Date.parse(b.created_at)
+  if (milliseconds) return milliseconds
+  const fraction = (value: string) => (value.match(/\.(\d+)/)?.[1] ?? '').padEnd(6, '0')
+  return fraction(a.created_at).localeCompare(fraction(b.created_at)) || a.id.localeCompare(b.id)
+}
+function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]) {
+  const rows = new Map(current.filter(m => !m.id.startsWith('pending-')).map(m => [m.id, m]))
+  incoming.forEach(m => rows.set(m.id, m))
+  return [...rows.values()].sort(messageOrder)
+}
 export function Chat({ accountId, courseId, courseName, session, loadingSession, docs, onSaved, onSessionCreated, onSessionUpdated, onSessionsRefresh, onBusyChange, onOpenSidebar }: ChatProps) {
   const sessionId = session?.id ?? ''
   const draftKey = `studyrag-draft-${accountId}-${courseId}-${sessionId || 'new'}`
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [historyCursor, setHistoryCursor] = useState<string | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const historyWorking = useRef(false)
+  const prependScroll = useRef<{ height: number; top: number } | null>(null)
   const [drafts, setDrafts] = useState<Attachment[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>(session?.document_ids ?? [])
   const [question, setQuestion] = useState(() => readDraft(draftKey))
@@ -127,17 +142,58 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
   }, [sessionId])
   useLayoutEffect(() => {
     const area = scrollRef.current
-    if (area && followRef.current) area.scrollTop = area.scrollHeight
+    if (area && prependScroll.current) {
+      area.scrollTop = prependScroll.current.top + area.scrollHeight - prependScroll.current.height
+      prependScroll.current = null
+    } else if (area && followRef.current) area.scrollTop = area.scrollHeight
   }, [messages, progress])
   useEffect(() => {
     if (busy) return
     let disposed = false
     if (!sessionId) { setMessages([]); setDrafts([]); setLoading(false); return }
     if (loadedSession.current !== sessionId) setLoading(true)
-    Promise.all([chatMessages(sessionId), listAttachments(sessionId)]).then(([history, files]) => { if (!disposed) { setMessages(history); setDrafts(files.filter(a => !a.message_id)); loadedSession.current = sessionId } }).catch(cause => { if (!disposed) setError(String(cause)) }).finally(() => { if (!disposed) setLoading(false) })
+    Promise.all([chatMessagePage(sessionId), listAttachments(sessionId)]).then(([history, files]) => { if (!disposed) { const first = loadedSession.current !== sessionId; setMessages(current => first ? history.items : mergeMessages(current, history.items)); if (first) setHistoryCursor(history.next_cursor); setDrafts(files.filter(a => !a.message_id)); loadedSession.current = sessionId } }).catch(cause => { if (!disposed) setError(String(cause)) }).finally(() => { if (!disposed) setLoading(false) })
     return () => { disposed = true }
   }, [sessionId, busy])
 
+  async function loadEarlier() {
+    if (!historyCursor || historyWorking.current || busy || working.current) return
+    historyWorking.current = true; setHistoryLoading(true); setError('')
+    try {
+      const page = await chatMessagePage(sessionId, historyCursor)
+      if (!mounted.current) return
+      const area = scrollRef.current
+      if (area) prependScroll.current = { height: area.scrollHeight, top: area.scrollTop }
+      followRef.current = false
+      setMessages(current => mergeMessages(current, page.items)); setHistoryCursor(page.next_cursor)
+    } catch (cause) { if (mounted.current) setError(String(cause)) }
+    finally { historyWorking.current = false; if (mounted.current) setHistoryLoading(false) }
+  }
+  async function refreshLatest(target: string) {
+    const page = await chatMessagePage(target)
+    if (!mounted.current) return
+    if (loadedSession.current !== target) { setHistoryCursor(page.next_cursor); loadedSession.current = target }
+    setMessages(current => mergeMessages(current, page.items))
+  }
+  async function revokeHistory(grantId: string) {
+    if (busy || working.current || historyWorking.current) return
+    working.current = true; setBusy(true); setError('')
+    const target = sessionId, wanted = messages.length
+    try {
+      await revokeRepository(target, grantId)
+      // Hide old answers immediately, then re-authorize every loaded page.
+      if (!mounted.current) return
+      setMessages(current => current.map(m => m.role === 'assistant' ? { ...m, content: '来源权限已变更，正在重新核对历史。', citations: [] } : m))
+      let page = await chatMessagePage(target)
+      let authorized = page.items
+      while (page.next_cursor && authorized.length < wanted) {
+        page = await chatMessagePage(target, page.next_cursor)
+        authorized = mergeMessages(page.items, authorized)
+      }
+      if (mounted.current) { setMessages(authorized); setHistoryCursor(page.next_cursor) }
+    } catch (cause) { if (mounted.current) setError(String(cause)) }
+    finally { working.current = false; if (mounted.current) setBusy(false) }
+  }
   async function ensureSession(): Promise<string> {
     if (sessionId) return sessionId
     const created = await createChatSession(courseId, selectedIds.length ? selectedIds : null)
@@ -145,7 +201,7 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
     return created.id
   }
   async function changeScope(ids: string[]) {
-    if (busy || working.current) return
+    if (busy || working.current || historyWorking.current) return
     const previousIds = selectedIds
     setSelectedIds(ids)
     if (!sessionId) return
@@ -155,7 +211,7 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
     finally { working.current = false; setBusy(false) }
   }
   async function addImages(files: File[]) {
-    if (busy || loading || loadingSession || working.current || files.length === 0) return
+    if (busy || loading || loadingSession || working.current || historyWorking.current || files.length === 0) return
     working.current = true
     setBusy(true); setError('')
     try {
@@ -174,7 +230,7 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
   async function send() {
     const content = question.trim()
     const requestThinking = thinking
-    if ((!content && drafts.length === 0) || busy || loading || loadingSession || working.current) return
+    if ((!content && drafts.length === 0) || busy || loading || loadingSession || working.current || historyWorking.current) return
     working.current = true; followRef.current = true; setShowBottom(false)
     setError(''); setBusy(true); setProgress('正在理解问题…')
     const controller = new AbortController()
@@ -193,12 +249,12 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
         if (event === 'citation') setMessages(current => current.map((item, index) => index === current.length - 1 ? { ...item, citations: [...item.citations, data as unknown as Citation] } : item))
         if (event === 'tool_status') setProgress(String(data.message ?? '正在处理…'))
       }, controller.signal, drafts.map(a => a.id), requestThinking)
-      if (mounted.current) { setMessages(await chatMessages(target)); setDrafts([]); onSessionsRefresh() }
+      if (mounted.current) { await refreshLatest(target); setDrafts([]); onSessionsRefresh() }
     } catch (cause) {
       if (mounted.current) setError(controller.signal.aborted ? '已停止本次回答。' : cause instanceof Error ? cause.message : String(cause))
     } finally { working.current = false; if (mounted.current) { setBusy(false); setProgress('') }; abortRef.current = null }
   }
-  const inputDisabled = busy || loading || loadingSession
+  const inputDisabled = busy || loading || loadingSession || historyLoading
   return <section className="chat-page" aria-label="课程对话">
     <header className="conversation-header">
       <button type="button" className="icon-button mobile-nav-button" aria-label="打开课程导航" onClick={onOpenSidebar}><Icon name="menu" size={21} /></button>
@@ -209,7 +265,7 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
       followRef.current = area.scrollHeight - area.scrollTop - area.clientHeight < 64
       setShowBottom(!followRef.current)
     }}>
-    <div className="chat-history" aria-live="polite">{messages.length === 0 && <div className="conversation-empty"><h2>{loading || loadingSession ? '正在加载对话…' : '有什么想一起弄明白的？'}</h2><p>输入问题，或附上题目图片。</p></div>}{messages.map(item => <article key={item.id} className={`chat-message ${item.role}`}><strong>{item.role === 'user' ? '你' : '学习助手'}</strong><small className="thinking-history">{thinkingLabel(item.thinking)}</small>{item.role === 'assistant' ? <Answer message={item} /> : <p>{item.content}</p>}<div className="attachments">{item.attachments?.map(a => <Picture key={a.id} item={a} removable={!busy} onRemove={() => removeImage(a)} onSaved={onSaved} onError={setError} />)}</div>{item.status === 'pending' && <small>{progress || '正在生成…'}</small>}{item.status === 'failed' && <small className="job-error">{item.error ?? '回答失败，请重试'}</small>}{item.citations.length > 0 && <details className="source-disclosure"><summary>查看来源（{item.citations.length}）</summary><div className="sources">{item.citations.map(citation => <Source key={citation.citation_id} item={citation} onError={setError} onRevoke={async id => { await revokeRepository(sessionId, id); setMessages(await chatMessages(sessionId)) }} />)}</div></details>}</article>)}</div>
+    <div className="chat-history" aria-live="polite">{historyCursor && <button type="button" disabled={historyLoading || busy} onClick={() => void loadEarlier()}>{historyLoading ? '正在加载…' : '加载更早消息'}</button>}{messages.length === 0 && <div className="conversation-empty"><h2>{loading || loadingSession ? '正在加载对话…' : '有什么想一起弄明白的？'}</h2><p>输入问题，或附上题目图片。</p></div>}{messages.map(item => <article key={item.id} className={`chat-message ${item.role}`}><strong>{item.role === 'user' ? '你' : '学习助手'}</strong><small className="thinking-history">{thinkingLabel(item.thinking)}</small>{item.role === 'assistant' ? <Answer message={item} /> : <p>{item.content}</p>}<div className="attachments">{item.attachments?.map(a => <Picture key={a.id} item={a} removable={!busy} onRemove={() => removeImage(a)} onSaved={onSaved} onError={setError} />)}</div>{item.status === 'pending' && <small>{progress || '正在生成…'}</small>}{item.status === 'failed' && <small className="job-error">{item.error ?? '回答失败，请重试'}</small>}{item.citations.length > 0 && <details className="source-disclosure"><summary>查看来源（{item.citations.length}）</summary><div className="sources">{item.citations.map(citation => <Source key={citation.citation_id} item={citation} onError={setError} onRevoke={revokeHistory} />)}</div></details>}</article>)}</div>
     </div>
     <div className="composer-dock">
       {showBottom && <button type="button" className="icon-button jump-bottom" aria-label="回到最新消息" title="回到最新消息" onClick={() => { followRef.current = true; scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); setShowBottom(false) }}><Icon name="down" /></button>}

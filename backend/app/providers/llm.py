@@ -133,6 +133,11 @@ class OpenAICompatibleLLM:
             )
         with httpx.Client(timeout=transport_timeout) as client:
             for attempt in range(2):
+                from app.evaluation.runtime import observe
+
+                observe(
+                    "http_attempt", purpose=options.purpose if options else "legacy"
+                )
                 with client.stream(
                     "POST",
                     url,
@@ -217,6 +222,14 @@ def complete_turn(
 def _collect_turn(provider, messages, tools, options=None, execution=None):
     text, reasoning, calls = [], [], {}
     finish = None
+    from app.evaluation.runtime import observe
+
+    observe(
+        "model_input",
+        messages=messages,
+        tools=tools or [],
+        purpose=options.purpose if options else "legacy",
+    )
     turn = Turn({})
     kwargs = {"options": options, "execution": execution} if options else {}
     for delta in provider.stream(messages, tools=tools, **kwargs):

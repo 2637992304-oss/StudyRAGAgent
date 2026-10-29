@@ -6,6 +6,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from contextvars import copy_context
+from copy import deepcopy
 from typing import TypedDict
 from uuid import UUID
 
@@ -36,7 +37,7 @@ from app.providers.vision import image_block, inspect_image
 _SEARCH_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="course-search")
 
 
-def timed_search(retrieve, db, chat, query, execution=None):
+def timed_search(retrieve, db, chat, query, execution=None, *, question=None):
     """Bound waiting; late read-only work owns a separate session."""
     bind = db.get_bind()
     snapshot = ChatSession(
@@ -45,6 +46,7 @@ def timed_search(retrieve, db, chat, query, execution=None):
         course_id=chat.course_id,
         document_ids=list(chat.document_ids) if chat.document_ids else None,
     )
+    snapshot.table_question = question
     execution = execution or Execution.start(get_settings().chat_deadline_seconds)
     timeout = min(get_settings().retrieval_timeout, execution.remaining())
 
@@ -160,6 +162,8 @@ class AgentState(TypedDict, total=False):
     question: str
     input_context: list[dict]
     answer_checks: list[dict]
+    answer_method: str
+    program_answer: str
 
 
 def resolve_scope(
@@ -346,10 +350,45 @@ def run_agent(
         grant_context.append(
             {"grant_id": grant.id, "repository": grant.repository, "ref": grant.ref}
         )
+    from app.api.chat import SYSTEM_PROMPT, generation_guidance
+    from app.evaluation.runtime import observe
+
+    extra_system, extra_question = generation_guidance(query)
+    if extra_question:
+        # Derived question text remains user data, never a system instruction.
+        history = deepcopy(history)
+        for message in reversed(history):
+            if message.get("role") == "user":
+                content = message.get("content", "")
+                if isinstance(content, str):
+                    message["content"] = content + extra_question
+                else:
+                    content.append({"type": "text", "text": extra_question})
+                break
+    observe(
+        "features",
+        flags={
+            name: getattr(settings, name)
+            for name in (
+                "retrieval_grounded_answers",
+                "retrieval_table_reasoning",
+                "retrieval_facet_coverage",
+                "retrieval_verified_tables",
+            )
+        },
+        scope=scope,
+    )
     graph = StateGraph(AgentState)
 
     def decide(state):
         execution.check()
+        if state.get("program_answer"):
+            return {
+                "answer": state["program_answer"],
+                "stop_reason": "answer",
+                "calls": [],
+                "answer_method": "verified_table_v1",
+            }
         if policy.notice:
             return {
                 "answer": policy.notice,
@@ -406,6 +445,7 @@ def run_agent(
         previous_count = len(evidence)
         progress = list(state.get("progress", []))
         previous_progress = len(progress)
+        program_answer = ""
         # Multiple calls in one turn are executed in order; duplicates never execute.
         for call in state["calls"]:
             execution.check()
@@ -453,7 +493,10 @@ def run_agent(
                 if len(seen) >= settings.agent_max_rounds * 2:
                     raise ValueError("call_limit")
                 seen.append(signature)
-                rows, ids = timed_search(retrieve, db, chat, query_value, execution)
+                retrieval = timed_search(
+                    retrieve, db, chat, query_value, execution, question=query
+                )
+                rows, ids = retrieval
                 candidates = list(dict.fromkeys([*candidates, *ids]))
                 sources = []
                 for chunk, doc in rows:
@@ -476,14 +519,89 @@ def run_agent(
                         {
                             "label": evidence.index(chunk.id) + 1,
                             "chunk_id": chunk.id,
+                            "document_id": doc.id,
+                            "owner_id": doc.owner_id,
+                            "course_id": doc.course_id,
+                            "section": chunk.section_path,
+                            "page_end": chunk.page_end,
                             "filename": doc.filename,
                             "page": chunk.page_start,
                             "slide": chunk.slide_no,
                             "text": chunk.text,
                         }
                     )
+                from app.evaluation.runtime import observe
+
+                verification = getattr(retrieval, "verification", {})
+                plan_question = getattr(retrieval, "question", None) or query_value
+                table_reason = "disabled"
+                if settings.retrieval_verified_tables:
+                    table_reason = (
+                        "query_rewritten"
+                        if plan_question.strip() != query.strip()
+                        else "proof_unavailable"
+                    )
+                if (
+                    settings.retrieval_verified_tables
+                    and plan_question.strip() == query.strip()
+                ):
+                    from app.retrieval import Candidate
+                    from app.table_evidence import render_verified
+
+                    plans = verification.get("documents", [])
+                    if len(plans) == 1 and plans[0].get("status") == "verified_rows":
+                        # Require references for rows, keys and joins.
+                        def proof_ids(value):
+                            if isinstance(value, dict):
+                                found = set(value.get("source_ids", []))
+                                for key, child in value.items():
+                                    if key != "source_ids":
+                                        found |= proof_ids(child)
+                                return found
+                            if isinstance(value, list):
+                                return set().union(*(proof_ids(v) for v in value))
+                            return set()
+
+                        authorized = {chunk.id for chunk, _ in rows}
+                        table_reason = "proof_sources_missing"
+                        if (
+                            proof_ids(plans[0]) <= authorized
+                            and authorized == set(evidence)
+                            and len(sources) == len(rows)
+                        ):
+                            ordered = sorted(
+                                rows, key=lambda row: evidence.index(row[0].id)
+                            )
+                            program_answer = (
+                                render_verified(
+                                    plans[0], [Candidate(c, d) for c, d in ordered]
+                                )
+                                or ""
+                            )
+                            table_reason = (
+                                "verified" if program_answer else "render_incomplete"
+                            )
+                table_status = (
+                    "program"
+                    if program_answer
+                    else "fallback"
+                    if settings.retrieval_verified_tables
+                    else "disabled"
+                )
+                observe(
+                    "table_verification",
+                    enabled=settings.retrieval_verified_tables,
+                    status=table_status,
+                    reason=table_reason,
+                    verification=verification,
+                )
                 status = "ok" if sources else "empty"
-                result = {"status": status, "sources": sources}
+                result = {
+                    "status": status,
+                    "sources": sources,
+                    "table_status": table_status,
+                    "table_reason": table_reason,
+                }
             except ExecutionStopped as exc:
                 if exc.code not in {"retrieval_timeout", "step_timeout"}:
                     raise
@@ -532,6 +650,8 @@ def run_agent(
                     "message": "检索暂时不可用，可以说明限制，不要编造结果。",
                 }
             finally:
+                if "sources" in result:
+                    observe("course_sources", sources=result["sources"])
                 trace.append(
                     {
                         "tool": name[:100],
@@ -541,6 +661,8 @@ def run_agent(
                         "elapsed_ms": int((time.monotonic() - started) * 1000),
                         "source_ids": list(evidence),
                         "code": result.get("code"),
+                        "table_status": result.get("table_status"),
+                        "table_reason": result.get("table_reason"),
                     }
                 )
                 messages.append(
@@ -557,6 +679,7 @@ def run_agent(
         query_planner.input_tokens = query_planner.output_tokens = 0
         return {
             "messages": messages,
+            "program_answer": program_answer,
             "trace": trace,
             "seen": seen,
             "evidence": evidence,
@@ -585,6 +708,7 @@ def run_agent(
             {
                 "role": "system",
                 "content": SYSTEM
+                + extra_system.removeprefix(SYSTEM_PROMPT)
                 + "\n本轮回答范围："
                 + scope
                 + "\n本轮工具策略（auto自主选择，legacy限定查询；仓库范围由工具校验）："
@@ -745,6 +869,11 @@ def checked_answer(db, chat, state, scope, provider, *, execution=None, options=
     )
     # Direct image explanations need no retrieval, but still receive a semantic
     # check against their actual image, including numerical/logical claims.
+    if state.get("answer_method") == "verified_table_v1":
+        execution.check()
+        if reason != "answer":
+            state["answer_method"] = "blocked"
+        return answer, rows, reason
     if not rows and not (has_images and reason == "answer"):
         return answer, rows, reason
     result = review(provider, state, answer, rows, scope, execution, 1)

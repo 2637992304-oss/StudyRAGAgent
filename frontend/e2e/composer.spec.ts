@@ -84,7 +84,7 @@ test('加号打开图片选择，预览可移除，图文和思考设置随箭�
   let completeResponse!: () => void
   const responseGate = new Promise<void>(resolve => { completeResponse = resolve })
   let history: ChatMessage[] = []
-  await page.route('**/api/v1/chat/sessions/session-0/messages', async route => {
+  await page.route('**/api/v1/chat/sessions/session-0/messages*', async route => {
     if (route.request().method() === 'GET') { await route.fulfill({ json: history }); return }
     await responseGate
     history = [{ id: 'answer-0', role: 'assistant', content: '这是图片题目的解答。', status: 'completed', error: null, created_at: '2026-10-24T00:00:00Z', citations: [], thinking: true }]
@@ -110,7 +110,7 @@ test('生成时可用右下角停止按钮取消', async ({ page }) => {
   await openComposer(page)
   let completeResponse!: () => void
   const responseGate = new Promise<void>(resolve => { completeResponse = resolve })
-  await page.route('**/api/v1/chat/sessions/session-0/messages', async route => {
+  await page.route('**/api/v1/chat/sessions/session-0/messages*', async route => {
     if (route.request().method() === 'GET') { await route.fulfill({ json: [] }); return }
     await responseGate
     await route.abort().catch(() => undefined)

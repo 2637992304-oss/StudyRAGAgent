@@ -18,7 +18,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from app.api import chat as chat_api
 from app.core.auth import create_token
 from app.core.config import get_settings
 from app.db.models import Chunk, Document, Message
@@ -181,14 +180,45 @@ def end_to_end(
     actual_context = []
     prompt_hash = None
 
-    def capture(evidence, messages):
-        nonlocal prompt_hash
-        for label, (chunk, document) in enumerate(evidence, 1):
-            if not scope_ok(Candidate(chunk, document), scope):
-                raise PermissionError("Actual prompt scope violation")
-            actual_context.append(
-                {
-                    "label": label,
+    from app.evaluation.runtime import observer
+
+    model_inputs, requests, input_hashes, feature_status = [], [], [], []
+    captured = False
+
+    def capture(event):
+        nonlocal prompt_hash, captured
+        if event["kind"] == "http_attempt":
+            requests.append(event["purpose"])
+        elif event["kind"] in {"features", "table_verification"}:
+            feature_status.append(
+                {k: v for k, v in event.items() if k != "verification"}
+            )
+        elif event["kind"] == "model_input":
+            model_inputs.append(event["purpose"])
+            prompt_hash = hashlib.sha256(
+                json.dumps(event["messages"], ensure_ascii=False).encode()
+            ).hexdigest()
+            input_hashes.append({"purpose": event["purpose"], "sha256": prompt_hash})
+        elif event["kind"] == "course_sources":
+            captured = True
+            for source in event["sources"]:
+                chunk, document = (
+                    db.get(Chunk, source["chunk_id"]),
+                    db.get(Document, source["document_id"]),
+                )
+                if (
+                    not chunk
+                    or not document
+                    or not scope_ok(Candidate(chunk, document), scope)
+                ):
+                    raise PermissionError("Actual prompt scope violation")
+                if source["text"] != chunk.text:
+                    raise ValueError("Actual tool source mismatch")
+                existing = next(
+                    (x for x in actual_context if x["label"] == source["label"]), None
+                )
+                record = {
+                    "label": source["label"],
                     "chunk_id": chunk.id,
                     "document_id": document.id,
                     "document": (document_keys or {}).get(
@@ -198,23 +228,27 @@ def end_to_end(
                     "page_start": chunk.page_start,
                     "page_end": chunk.page_end,
                     "slide_no": chunk.slide_no,
-                    "text": "" if redact else chunk.text,
-                    "text_sha256": hashlib.sha256(chunk.text.encode()).hexdigest(),
+                    "text": "" if redact else source["text"],
+                    "text_sha256": hashlib.sha256(source["text"].encode()).hexdigest(),
                 }
-            )
-        prompt_hash = hashlib.sha256(
-            json.dumps(messages, ensure_ascii=False).encode()
-        ).hexdigest()
+                if existing and existing != record:
+                    raise ValueError("Source label changed during request")
+                if not existing:
+                    actual_context.append(record)
 
-    token = chat_api.prompt_observer.set(capture)
+    token = observer.set(capture)
     try:
         response = client.post(
             f"/api/v1/chat/sessions/{session.json()['id']}/messages",
             headers=headers,
-            json={"content": case["question"]},
+            json={
+                "content": case["question"],
+                "answer_scope": "strict",
+                "web_enabled": False,
+            },
         )
     finally:
-        chat_api.prompt_observer.reset(token)
+        observer.reset(token)
     if response.status_code != 200:
         raise ValueError("Question request failed")
     events = []
@@ -232,7 +266,7 @@ def end_to_end(
         return {
             "status": "error",
             "error_type": code,
-            "llm_calls": 1,
+            "llm_calls": len(requests),
             "total_ms": (time.perf_counter() - start) * 1000,
         }
     final = terminal[-1][1]
@@ -284,8 +318,6 @@ def end_to_end(
     usage_in, usage_out = message.input_tokens, message.output_tokens
     program_answer = final.get("answer_method") == "verified_table_v1"
     cost = None
-    if pricing and final.get("status") == "no_evidence":
-        cost = 0.0
     if pricing and pricing["model"] == get_settings().llm_model:
         if usage_in is not None and usage_out is not None:
             cost = (
@@ -296,7 +328,13 @@ def end_to_end(
     return {
         "answer": answer,
         "actual_context": actual_context,
-        "actual_prompt_sha256": prompt_hash,
+        "actual_prompt_sha256": hashlib.sha256(
+            json.dumps(input_hashes, sort_keys=True).encode()
+        ).hexdigest()
+        if input_hashes
+        else None,
+        "model_input_hashes": input_hashes,
+        "feature_status": feature_status,
         "sse_terminal": final.get("status", "completed"),
         **refusal,
         "first_answer_ms": message.first_token_ms,
@@ -304,13 +342,15 @@ def end_to_end(
         "input_tokens": usage_in,
         "output_tokens": usage_out,
         "usage_source": "not_applicable_program"
-        if program_answer
+        if program_answer and not requests
         else "provider"
         if usage_in is not None
         else "unknown",
         "answer_method": final.get("answer_method", "llm"),
         "cost": cost,
-        "llm_calls": int(final.get("status") != "no_evidence" and not program_answer),
+        "llm_calls": len(requests),
+        "model_turns": len(model_inputs),
+        "context_capture": "captured" if captured else "no_course_tool",
         "citations": citations,
         "unknown_citation_labels": sorted(
             cited_labels - {c["label"] for c in citations}

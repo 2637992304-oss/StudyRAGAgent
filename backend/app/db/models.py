@@ -59,6 +59,11 @@ class Document(Base):
     size_bytes: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
     active_job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    parse_warnings: Mapped[list] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
+    parse_quality: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    parser_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     course: Mapped[Course] = relationship(back_populates="documents")
     jobs: Mapped[list["IngestionJob"]] = relationship(
@@ -81,6 +86,17 @@ class IngestionJob(Base):
     stage: Mapped[str] = mapped_column(String(40), default="queued")
     progress: Mapped[int] = mapped_column(Integer, default=0)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    execution_token: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    lease_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    delivery_attempts: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    dispatched_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=now, onupdate=now

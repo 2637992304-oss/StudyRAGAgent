@@ -58,7 +58,7 @@ export function CourseLibrary({ course, onClose, onChanged }: { course: Course; 
     <div className="library-documents" aria-busy={loading}>
       {loading ? <p className="empty">正在加载资料…</p> : docs.length === 0 ? <p className="empty">还没有资料，点击右上角的 + 上传第一份笔记或课件。</p> : docs.map(item => <article className="document" key={item.id}>
         <div className="file-icon">{item.filename.split('.').pop()?.toUpperCase()}</div>
-        <div className="document-details"><button className="text-button document-name" onClick={() => openDocument(item.id, null).catch(e => setError(String(e)))}>{item.filename}</button><p>{item.document_type} · {(item.size_bytes / 1024).toFixed(1)} KB</p>{jobs[item.job_id]?.error && <p className="job-error">{jobs[item.job_id].error}</p>}</div>
+        <div className="document-details"><button className="text-button document-name" onClick={() => openDocument(item.id, null).catch(e => setError(String(e)))}>{item.filename}</button><p>{item.document_type} · {(item.size_bytes / 1024).toFixed(1)} KB</p>{item.parse_quality === 'partial' && <p className="job-error">资料已可检索，但部分内容可能未完整提取。</p>}{item.parse_warnings?.map((warning, index) => <p className="job-error" key={index}>{warning}</p>)}{jobs[item.job_id]?.error && <p className="job-error">{jobs[item.job_id].error}</p>}</div>
         <span className={`badge ${item.status}`}>{stages[jobs[item.job_id]?.stage ?? item.status] ?? item.status}</span>
         <div className="actions">{item.status === 'failed' && <button disabled={busy} onClick={() => void perform(() => retry(item.id))}>重试</button>}<button className="danger" disabled={busy} onClick={() => { if (window.confirm(`删除「${item.filename}」及其索引？`)) void perform(() => remove(item.id)) }}>删除</button></div>
       </article>)}

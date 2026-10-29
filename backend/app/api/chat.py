@@ -11,10 +11,11 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from itsdangerous import BadSignature, URLSafeSerializer
 from pydantic import BaseModel, Field, StrictBool
-from sqlalchemy import select, text
+from sqlalchemy import and_, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.auto_tools import automatic_policy, prepare_repositories
@@ -336,15 +337,55 @@ def list_messages(
     session_id: str,
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
-) -> list[dict]:
+    page_size: int | None = Query(default=None, ge=1, le=200),
+    before: str | None = Query(default=None, max_length=2048),
+):
     owned_session(db, session_id, user.id)
-    messages = db.scalars(
-        select(Message)
-        .where(Message.session_id == session_id, Message.owner_id == user.id)
-        .order_by(Message.created_at, Message.id)
-        .limit(200)
-    ).all()
-    return [message_data(db, message) for message in messages]
+    codec = URLSafeSerializer(get_settings().auth_secret, salt="message-page-v1")
+    statement = select(Message).where(
+        Message.session_id == session_id, Message.owner_id == user.id
+    )
+    if before is not None:
+        try:
+            cursor = codec.loads(before)
+            if cursor["owner"] != user.id or cursor["session"] != session_id:
+                raise ValueError("cursor_scope")
+            stamp = datetime.fromisoformat(cursor["time"])
+            key = cursor["id"]
+            if not isinstance(key, str) or not key:
+                raise ValueError("cursor_id")
+        except (BadSignature, ValueError, KeyError, TypeError) as exc:
+            raise HTTPException(400, "消息分页游标无效或不属于当前对话") from exc
+        statement = statement.where(
+            or_(
+                Message.created_at < stamp,
+                and_(Message.created_at == stamp, Message.id < key),
+            )
+        )
+    size = page_size or 200
+    rows = list(
+        db.scalars(
+            statement.order_by(Message.created_at.desc(), Message.id.desc()).limit(
+                size + 1
+            )
+        )
+    )
+    more = len(rows) > size
+    rows = rows[:size]
+    next_cursor = None
+    if more and rows:
+        last = rows[-1]
+        next_cursor = codec.dumps(
+            {
+                "owner": user.id,
+                "session": session_id,
+                "time": last.created_at.isoformat(),
+                "id": last.id,
+            }
+        )
+    items = [message_data(db, message) for message in reversed(rows)]
+    # Existing scripts retain the array contract, now containing the latest 200.
+    return items if page_size is None else {"items": items, "next_cursor": next_cursor}
 
 
 @router.get("/citations/{citation_id}")
@@ -392,13 +433,20 @@ def retrieve(
 ) -> tuple[list[tuple[Chunk, Document]], list[str]]:
     from app.retrieval import search
 
-    result = search(db, chat, query, get_settings(), embed=embed_texts)
+    table_question = getattr(chat, "table_question", None) or query
+    result = search(
+        db, chat, query, get_settings(), embed=embed_texts, table_query=table_question
+    )
     observer = retrieval_observer.get()
     if observer is not None:
         observer(result)
-    return (
+    from app.evaluation.runtime import CourseRetrieval
+
+    return CourseRetrieval(
         [(item.chunk, item.document) for item in result.evidence],
         [item.chunk.id for item in result.ranked],
+        result.table_verification,
+        question=table_question,
     )
 
 
@@ -408,21 +456,7 @@ prompt_observer = ContextVar("study_rag_prompt_observer", default=None)
 retrieval_observer = ContextVar("study_rag_retrieval_observer", default=None)
 
 
-def build_prompt(
-    evidence: list[tuple[Chunk, Document]], query: str
-) -> list[dict[str, str]]:
-    blocks = []
-    for number, (chunk, doc) in enumerate(evidence, 1):
-        location = (
-            f"第 {chunk.page_start} 页"
-            if chunk.page_start
-            else (f"第 {chunk.slide_no} 张幻灯片" if chunk.slide_no else "无页码")
-        )
-        blocks.append(
-            f"[{number}] 文档：{doc.filename}；位置：{location}；"
-            f"章节：{chunk.section_path or '无'}；片段 ID：{chunk.id}\n"
-            f"<source>\n{chunk.text}\n</source>"
-        )
+def generation_guidance(query):
     system = SYSTEM_PROMPT
     if get_settings().retrieval_grounded_answers:
         system += (
@@ -458,6 +492,25 @@ def build_prompt(
         if len(facets) > 1
         else ""
     )
+    return system, instructions
+
+
+def build_prompt(
+    evidence: list[tuple[Chunk, Document]], query: str
+) -> list[dict[str, str]]:
+    blocks = []
+    for number, (chunk, doc) in enumerate(evidence, 1):
+        location = (
+            f"第 {chunk.page_start} 页"
+            if chunk.page_start
+            else (f"第 {chunk.slide_no} 张幻灯片" if chunk.slide_no else "无页码")
+        )
+        blocks.append(
+            f"[{number}] 文档：{doc.filename}；位置：{location}；"
+            f"章节：{chunk.section_path or '无'}；片段 ID：{chunk.id}\n"
+            f"<source>\n{chunk.text}\n</source>"
+        )
+    system, instructions = generation_guidance(query)
     messages = [
         {"role": "system", "content": system},
         {
@@ -734,6 +787,14 @@ def stream_agent(
                 )
                 if not dependencies_allowed(db, chat, assistant.tool_policy, policy):
                     raise RuntimeError("external_authorization_revoked")
+            from app.evaluation.runtime import observe
+
+            observe(
+                "final",
+                answer=answer,
+                reason=reason,
+                answer_method=state.get("answer_method", "llm"),
+            )
             assistant.content = answer
             assistant.status = "no_evidence" if reason == "no_evidence" else "completed"
             assistant.stop_reason = reason
@@ -805,6 +866,7 @@ def stream_agent(
                     "message_id": assistant_id,
                     "status": assistant.status,
                     "stop_reason": reason,
+                    "answer_method": state.get("answer_method", "llm"),
                     "input_tokens": assistant.input_tokens,
                     "output_tokens": assistant.output_tokens,
                 },

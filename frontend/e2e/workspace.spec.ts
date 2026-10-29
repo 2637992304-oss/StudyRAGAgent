@@ -56,6 +56,18 @@ async function courseTool(page: Page, course: string, tool: string) {
   return page.getByRole('button', { name: tool, exact: true })
 }
 
+test('资料部分解析成功时展示具体警告', async ({ page }) => {
+  await page.route('**/api/v1/courses/c1/documents', route => route.fulfill({ json: [{
+    id: 'partial-1', course_id: 'c1', filename: 'mixed.pdf', document_type: '课件',
+    size_bytes: 100, status: 'ready', job_id: '', created_at: date,
+    parse_quality: 'partial', parse_warnings: ['第 2 页OCR未完成，内容可能不完整'],
+  }] }))
+  await open(page)
+  await (await courseTool(page, '数据库学习', '数据库学习的课程资料')).click()
+  await expect(page.getByText('资料已可检索，但部分内容可能未完整提取。')).toBeVisible()
+  await expect(page.getByText('第 2 页OCR未完成，内容可能不完整')).toBeVisible()
+})
+
 test('课程展开收起、对话归属、切换课程以及草稿和选择刷新恢复', async ({ page }) => {
   await open(page)
   const course = page.getByRole('button', { name: '数据库学习', exact: true })

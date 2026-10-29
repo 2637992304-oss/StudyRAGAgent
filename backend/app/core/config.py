@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     embedding_threads: int = Field(default=2, ge=1)
     ingestion_pair_headings: bool = False
     ingestion_pdf_layout: bool = False
+    ingestion_lease_seconds: int = Field(default=180, ge=3)
+    ingestion_recovery_interval: int = Field(default=15, ge=1)
+    ingestion_delivery_seconds: int = Field(default=60, ge=1)
+    ingestion_max_attempts: int = Field(default=3, ge=1)
+    ingestion_max_deliveries: int = Field(default=20, ge=1)
     model_cache_dir: Path = Path("./model_cache")
     demo_password: str = "study-demo-only"
     llm_provider: str = "openai_compatible"

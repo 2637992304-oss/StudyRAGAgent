@@ -1,7 +1,7 @@
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
 export type Course = { id: string; name: string }
-export type Document = { id: string; course_id: string; filename: string; document_type: string; size_bytes: number; status: string; job_id: string; created_at: string }
+export type Document = { id: string; course_id: string; filename: string; document_type: string; size_bytes: number; status: string; job_id: string; created_at: string; parse_warnings?: string[]; parse_quality?: string | null; parser_version?: string | null }
 export type Job = { id: string; status: string; stage: string; progress: number; error: string | null }
 export type User = { id: string; email: string }
 export type ChatSession = { id: string; course_id: string; document_ids: string[] | null; created_at: string; title?: string; title_renamed?: boolean }
@@ -68,6 +68,14 @@ export const remove = (documentId: string) => request<void>(`/documents/${docume
 export const chatSessions = (courseId: string) => request<ChatSession[]>(`/chat/sessions?course_id=${encodeURIComponent(courseId)}`)
 export const createChatSession = (courseId: string, documentIds: string[] | null) => request<ChatSession>('/chat/sessions', { method: 'POST', body: JSON.stringify({ course_id: courseId, document_ids: documentIds }) })
 export const chatMessages = (sessionId: string) => request<ChatMessage[]>(`/chat/sessions/${sessionId}/messages`)
+export type MessagePage = { items: ChatMessage[]; next_cursor: string | null }
+export async function chatMessagePage(sessionId: string, before?: string): Promise<MessagePage> {
+  const query = new URLSearchParams({ page_size: '50' })
+  if (before) query.set('before', before)
+  const result = await request<MessagePage | ChatMessage[]>(`/chat/sessions/${sessionId}/messages?${query}`)
+  // Older servers return the original array shape.
+  return Array.isArray(result) ? { items: result, next_cursor: null } : result
+}
 export const updateChatSession = (sessionId: string, changes: { title?: string; document_ids?: string[] | null }) => request<ChatSession>(`/chat/sessions/${sessionId}`, { method: 'PATCH', body: JSON.stringify(changes) })
 
 export const cancelChat = (sessionId: string) => request<void>(`/chat/sessions/${sessionId}/cancel`, { method: 'POST' })

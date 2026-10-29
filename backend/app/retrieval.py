@@ -488,6 +488,7 @@ def search(
     embed=embed_texts,
     store: VectorStore | None = None,
     reranker: Reranker | None = None,
+    table_query: str | None = None,
 ) -> RetrievalResult:
     start = time.perf_counter()
     if (
@@ -718,7 +719,7 @@ def search(
         and result.recalled
     ):
         before = time.perf_counter()
-        supplement_tables(store, result, query, settings)
+        supplement_tables(store, result, table_query or query, settings)
         result.table_ms = (time.perf_counter() - before) * 1000
     result.retrieval_ms = (time.perf_counter() - start) * 1000
     return result

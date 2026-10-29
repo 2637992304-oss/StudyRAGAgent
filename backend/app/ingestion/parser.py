@@ -10,11 +10,37 @@ class Part:
     section_path: str | None = None
     page: int | None = None
     slide: int | None = None
+    table: bool = False
+
+
+class ParsedParts(list):
+    version = "stage12-parse-v1"
+
+    def __init__(self):
+        super().__init__()
+        self.warnings = []
+
+
+class ParseError(ValueError):
+    def __init__(self, warnings):
+        super().__init__("文档没有可提取的文字；扫描件请检查OCR资源后重试")
+        self.warnings = list(warnings)
+        self.version = ParsedParts.version
+
+
+def merge_ocr(native, recognized):
+    lines, seen = [], set()
+    for line in (native + "\n" + recognized).splitlines():
+        key = " ".join(line.split()).casefold()
+        if key and key not in seen:
+            seen.add(key)
+            lines.append(line.strip())
+    return "\n".join(lines)
 
 
 def parse_document(filename: str, content: bytes) -> list[Part]:
     suffix = Path(filename).suffix.lower()
-    parts: list[Part] = []
+    parts = ParsedParts()
     if suffix in {".jpg", ".jpeg", ".png", ".webp"}:
         from app.providers.vision import describe_image
 
@@ -23,59 +49,106 @@ def parse_document(filename: str, content: bytes) -> list[Part]:
         from pypdf import PdfReader
 
         reader = PdfReader(io.BytesIO(content))
-        scan_pages = []
+        pages, suspect = {}, []
         for number, page in enumerate(reader.pages, 1):
             text = page.extract_text(extraction_mode="layout") or ""
             if not text.strip():
                 text = page.extract_text() or ""
-            if text.strip():
-                parts.append(Part(text=text.strip(), page=number))
-            elif list(page.images):
-                scan_pages.append(number)
-        if scan_pages:
+            pages[number] = text.strip()
+            images = bool(list(page.images))
+            # Explainable low-text + raster heuristic, not a completeness guarantee.
+            if images and len(re.sub(r"\s+", "", text)) < 160:
+                suspect.append(number)
+            elif images:
+                parts.warnings.append(
+                    f"第 {number} 页包含图像：已提取文字，图像内文字未全面核验"
+                )
+            elif not text.strip():
+                parts.warnings.append(
+                    f"第 {number} 页没有可提取文字，可能为空白页或不支持的内容"
+                )
+        if suspect:
+            pdf = None
             try:
                 import pypdfium2
                 from rapidocr import RapidOCR
-            except ImportError as exc:
-                raise ValueError(
-                    "PDF 没有可提取文字；扫描件需安装 OCR 扩展并重新处理"
-                ) from exc
-            ocr = RapidOCR()
-            pdf = pypdfium2.PdfDocument(content)
-            for number in scan_pages:
-                page = pdf[number - 1]
-                bitmap = page.render(scale=2)
-                result = ocr(bitmap.to_pil())
-                text = "\n".join(line for line in result.txts or () if line.strip())
-                if text.strip():
-                    parts.append(Part(text=text.strip(), page=number))
-                else:
-                    raise ValueError(f"PDF 第 {number} 页 OCR 未识别到文字")
-            parts.sort(key=lambda p: p.page or 0)
+
+                ocr = RapidOCR()
+                pdf = pypdfium2.PdfDocument(content)
+                for number in suspect:
+                    page = bitmap = image = None
+                    try:
+                        page = pdf[number - 1]
+                        bitmap = page.render(scale=2)
+                        image = bitmap.to_pil()
+                        result = ocr(image)
+                        recognized = "\n".join(
+                            line for line in result.txts or () if line.strip()
+                        )
+                        if not recognized.strip():
+                            raise ValueError("empty_ocr")
+                        pages[number] = merge_ocr(pages[number], recognized)
+                    except Exception:
+                        parts.warnings.append(
+                            f"第 {number} 页疑似扫描正文，OCR未完成或未识别到文字，"
+                            "内容可能不完整"
+                        )
+                    finally:
+                        for obj in (image, bitmap, page):
+                            close = getattr(obj, "close", None)
+                            if close:
+                                close()
+            except Exception:
+                parts.warnings.extend(
+                    f"第 {n} 页需要OCR，但OCR资源不可用，内容可能不完整"
+                    for n in suspect
+                )
+            finally:
+                if pdf is not None:
+                    pdf.close()
+        parts.extend(
+            Part(text=text, page=number)
+            for number, text in pages.items()
+            if text.strip()
+        )
     elif suffix == ".docx":
         from docx import Document
+        from docx.table import Table
+        from docx.text.paragraph import Paragraph
 
         doc = Document(io.BytesIO(content))
         section = None
-        for paragraph in doc.paragraphs:
-            text = paragraph.text.strip()
-            if not text:
-                continue
-            if paragraph.style and paragraph.style.name.startswith("Heading"):
-                section = text
-            parts.append(Part(text=text, section_path=section))
-        for table in doc.tables:
-            for row in table.rows:
-                text = " | ".join(cell.text.strip() for cell in row.cells)
-                if text.strip(" |"):
-                    parts.append(Part(text=text, section_path=section))
+        for block in doc.iter_inner_content():
+            if isinstance(block, Paragraph):
+                text = block.text.strip()
+                if not text:
+                    continue
+                if block.style and block.style.name.startswith("Heading"):
+                    section = text
+                parts.append(Part(text=text, section_path=section))
+            elif isinstance(block, Table):
+                rows = [
+                    " | ".join(cell.text.strip() for cell in row.cells)
+                    for row in block.rows
+                ]
+                text = "\n".join(row for row in rows if row.strip(" |"))
+                if text:
+                    parts.append(Part(text=text, section_path=section, table=True))
     elif suffix == ".pptx":
         from pptx import Presentation
 
         presentation = Presentation(io.BytesIO(content))
         for number, slide in enumerate(presentation.slides, 1):
             for shape in slide.shapes:
-                if shape.has_text_frame:
+                if shape.has_table:
+                    rows = [
+                        " | ".join(cell.text.strip() for cell in row.cells)
+                        for row in shape.table.rows
+                    ]
+                    text = "\n".join(row for row in rows if row.strip(" |"))
+                    if text:
+                        parts.append(Part(text=text, slide=number, table=True))
+                elif shape.has_text_frame:
                     for line in shape.text.splitlines():
                         if line.strip():
                             parts.append(Part(text=line.strip(), slide=number))
@@ -88,7 +161,7 @@ def parse_document(filename: str, content: bytes) -> list[Part]:
             if line.strip():
                 parts.append(Part(text=line.strip(), section_path=section))
     if not parts:
-        raise ValueError("文档没有可提取的文字")
+        raise ParseError(parts.warnings)
     return parts
 
 
@@ -137,7 +210,9 @@ def pdf_layout_units(parts: list[Part]) -> list[Part]:
     return output
 
 
-def line_windows(text: str, max_chars: int, overlap: int) -> list[str]:
+def line_windows(
+    text: str, max_chars: int, overlap: int, table: bool = False
+) -> list[str]:
     """Prefer complete lines; repeat original caption/header for long tables.
 
     Oversized single lines use bounded character windows (recorded limitation).
@@ -145,7 +220,9 @@ def line_windows(text: str, max_chars: int, overlap: int) -> list[str]:
     """
     lines = text.splitlines()
     prefix = []
-    if lines and re.match(r"^Figure\s+[A-Z]?\.?\d", lines[0]):
+    if table and lines:
+        prefix = lines[:1]
+    elif lines and re.match(r"^Figure\s+[A-Z]?\.?\d", lines[0]):
         prefix = lines[:2] if len(lines) > 2 else lines[:1]
     elif lines and re.match(r"^create table\b", lines[0], re.I):
         prefix = lines[:1]
@@ -225,7 +302,7 @@ def make_chunks(
             paired.append(part)
         parts = paired
     for part in parts:
-        preserve_rows = pdf_layout and part.page is not None
+        preserve_rows = part.table or (pdf_layout and part.page is not None)
         text = (
             "\n".join(" ".join(line.split()) for line in part.text.splitlines())
             if preserve_rows
@@ -239,7 +316,7 @@ def make_chunks(
             else (min(150, max_chars // 5) if part.page is not None else 0)
         )
         if preserve_rows:
-            pieces = line_windows(text, max_chars, overlap)
+            pieces = line_windows(text, max_chars, overlap, table=part.table)
         else:
             pieces = []
             for start in range(0, len(text), max_chars - overlap):

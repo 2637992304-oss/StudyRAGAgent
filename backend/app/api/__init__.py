@@ -17,6 +17,7 @@ from app.db.session import get_db
 from app.ingestion.validation import DOCUMENT_TYPES, validate_upload
 from app.providers.embeddings import embed_texts
 from app.providers.local_storage import LocalStorage
+from app.workers.recovery import dispatch
 from app.workers.tasks import ingest_task
 
 router = APIRouter(prefix="/api/v1")
@@ -99,6 +100,9 @@ def document_data(doc: Document) -> dict:
         "status": doc.status,
         "job_id": doc.active_job_id,
         "created_at": doc.created_at,
+        "parse_warnings": doc.parse_warnings,
+        "parse_quality": doc.parse_quality,
+        "parser_version": doc.parser_version,
     }
 
 
@@ -224,14 +228,8 @@ async def upload_document(
         db.rollback()
         storage.delete(storage_key)
         raise
-    try:
-        ingest_task.delay(job_id)
-    except Exception:
-        job.status = "failed"
-        job.stage = "queue"
-        job.error = "任务队列不可用，请重试"
-        doc.status = "failed"
-        db.commit()
+    dispatch(job_id, ingest_task.delay, engine=db.get_bind())
+    db.refresh(doc)
     return {"document_id": doc_id, "job_id": job_id, "status": doc.status}
 
 
@@ -315,15 +313,8 @@ def retry_document(
     doc.status = "queued"
     db.add(IngestionJob(id=job_id, owner_id=user.id, document_id=doc.id))
     db.commit()
-    try:
-        ingest_task.delay(job_id)
-    except Exception:
-        job = db.get(IngestionJob, job_id)
-        job.status = "failed"
-        job.stage = "queue"
-        job.error = "任务队列不可用，请重试"
-        doc.status = "failed"
-        db.commit()
+    dispatch(job_id, ingest_task.delay, engine=db.get_bind())
+    db.refresh(doc)
     return {"document_id": doc.id, "job_id": job_id, "status": doc.status}
 
 

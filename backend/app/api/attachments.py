@@ -18,6 +18,7 @@ from app.db.session import get_db
 from app.ingestion.validation import DOCUMENT_TYPES
 from app.providers.local_storage import LocalStorage
 from app.providers.vision import inspect_image
+from app.workers.recovery import dispatch
 from app.workers.tasks import ingest_task
 
 router = APIRouter(prefix="/api/v1")
@@ -191,16 +192,8 @@ def save_attachment(
         db.rollback()
         storage.delete(key)
         raise
-    try:
-        ingest_task.delay(job_id)
-    except Exception:
-        job.status, job.stage, job.error, doc.status = (
-            "failed",
-            "queue",
-            "任务队列不可用，请重试",
-            "failed",
-        )
-        db.commit()
+    dispatch(job_id, ingest_task.delay, engine=db.get_bind())
+    db.refresh(doc)
     return {"document_id": doc_id, "job_id": job_id, "status": doc.status}
 
 
