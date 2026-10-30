@@ -11,6 +11,7 @@ class Part:
     page: int | None = None
     slide: int | None = None
     table: bool = False
+    heading: bool = False
 
 
 class ParsedParts(list):
@@ -125,7 +126,15 @@ def parse_document(filename: str, content: bytes) -> list[Part]:
                     continue
                 if block.style and block.style.name.startswith("Heading"):
                     section = text
-                parts.append(Part(text=text, section_path=section))
+                parts.append(
+                    Part(
+                        text=text,
+                        section_path=section,
+                        heading=bool(
+                            block.style and block.style.name.startswith("Heading")
+                        ),
+                    )
+                )
             elif isinstance(block, Table):
                 rows = [
                     " | ".join(cell.text.strip() for cell in row.cells)
@@ -151,7 +160,17 @@ def parse_document(filename: str, content: bytes) -> list[Part]:
                 elif shape.has_text_frame:
                     for line in shape.text.splitlines():
                         if line.strip():
-                            parts.append(Part(text=line.strip(), slide=number))
+                            parts.append(
+                                Part(
+                                    text=line.strip(),
+                                    slide=number,
+                                    heading=bool(
+                                        slide.shapes.title is not None
+                                        and shape.shape_id
+                                        == slide.shapes.title.shape_id
+                                    ),
+                                )
+                            )
     else:
         content_text = content.decode("utf-8-sig")
         section = None
@@ -159,18 +178,26 @@ def parse_document(filename: str, content: bytes) -> list[Part]:
             if line.lstrip().startswith("#"):
                 section = line.lstrip("# ").strip()
             if line.strip():
-                parts.append(Part(text=line.strip(), section_path=section))
+                parts.append(
+                    Part(
+                        text=line.strip(),
+                        section_path=section,
+                        heading=bool(re.match(r"^\s*#{1,6}\s+", line)),
+                    )
+                )
     if not parts:
         raise ParseError(parts.warnings)
     return parts
 
 
 def classify(text: str) -> str:
-    if re.match(r"^\s*(答案|参考答案)\s*[:：]", text):
+    if re.match(r"^\s*(答案|参考答案|Answer|Solution)\s*([:：]|$)", text, re.I):
         return "answer"
-    if re.match(r"^\s*(解析|解答)\s*[:：]", text):
+    if re.match(r"^\s*(解析|解答|提示|Hint|Explanation)\s*([:：]|$)", text, re.I):
         return "explanation"
-    if re.match(r"^\s*(第?\d+[.、)]|题目\s*[:：])", text):
+    if re.match(
+        r"^\s*(第?\d+[.、)]|(题目|问题|练习|Question|Exercise)\s*([:：]|$))", text, re.I
+    ):
         return "question"
     return "body"
 
@@ -271,6 +298,7 @@ def make_chunks(
     *,
     pair_headings: bool = False,
     pdf_layout: bool = False,
+    aggregate_short: bool = False,
 ) -> list[dict]:
     if max_chars < 1:
         raise ValueError("max_chars 必须为正数")
@@ -281,26 +309,61 @@ def make_chunks(
         parts = pdf_layout_units(parts)
     if pair_headings:
         paired = []
-        pending = None
         for part in parts:
-            if re.fullmatch(r"\s*#{1,6}\s+[^\n]+", part.text):
-                pending = part
-                continue
-            # Attach only to its own section/location; no source boundary crossing.
-            if pending and (pending.section_path, pending.page, pending.slide) == (
-                part.section_path,
-                part.page,
-                part.slide,
+            if (
+                paired
+                and (
+                    paired[-1].heading
+                    or re.fullmatch(r"\s*#{1,6}\s+[^\n]+", paired[-1].text)
+                )
+                and part.page is None
+                and not part.heading
+                and not part.table
+                and not re.fullmatch(r"\s*#{1,6}\s+[^\n]+", part.text)
+                and classify(part.text) == "body"
+                and (paired[-1].section_path, paired[-1].page, paired[-1].slide)
+                == (part.section_path, part.page, part.slide)
+                and len(paired[-1].text) + len(part.text) + 1 <= max_chars
             ):
+                heading = paired.pop()
                 part = Part(
-                    pending.text + "\n" + part.text,
+                    heading.text + "\n" + part.text,
                     part.section_path,
                     part.page,
                     part.slide,
                 )
-            pending = None
             paired.append(part)
         parts = paired
+    if aggregate_short:
+        aggregated = []
+        for part in parts:
+            previous = aggregated[-1] if aggregated else None
+            if (
+                previous
+                and previous.page is None
+                and part.page is None
+                and not previous.table
+                and not part.table
+                and not previous.heading
+                and not part.heading
+                and not previous.text.lstrip().startswith("#")
+                and not part.text.lstrip().startswith("#")
+                and classify(previous.text) == classify(part.text) == "body"
+                and (previous.section_path, previous.slide)
+                == (part.section_path, part.slide)
+                and len(previous.text) < 160
+                and len(part.text) < 160
+                and len(previous.text) + len(part.text) + 1 <= max_chars
+            ):
+                aggregated[-1] = Part(
+                    previous.text + "\n" + part.text,
+                    part.section_path,
+                    part.page,
+                    part.slide,
+                )
+            else:
+                aggregated.append(part)
+        parts = aggregated
     for part in parts:
         preserve_rows = part.table or (pdf_layout and part.page is not None)
         text = (

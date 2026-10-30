@@ -16,6 +16,7 @@ from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.db.models import ExternalSource, Message, RepositoryGrant
+from app.evaluation.telemetry import measured
 from app.providers.safe_http import PublicHTTP, ToolError, public_url, response_json
 
 
@@ -498,6 +499,7 @@ class ExternalTools:
             return self.policy.web_enabled and bool(get_settings().tavily_api_key)
         return name in EXTERNAL_TOOLS and bool(self.policy.grant_ids)
 
+    @measured("external_tool")
     def invoke(self, name, raw):
         if not self.permitted(name):
             raise ToolError("tool_not_authorized")

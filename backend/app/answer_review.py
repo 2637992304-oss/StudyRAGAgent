@@ -123,11 +123,12 @@ def review(
                 },
                 state.get("input_context", []),
             ),
+            measurement_purpose="review" if attempt == 1 else "recheck",
             options=profile("citation_check"),
             execution=execution,
         )
-        state["input_tokens"] += turn.input_tokens
-        state["output_tokens"] += turn.output_tokens
+        state["input_tokens"] += turn.input_tokens or 0
+        state["output_tokens"] += turn.output_tokens or 0
         raw = turn.message.get("content", "")
         audit["raw"] = raw
         if turn.message.get("tool_calls"):
@@ -202,11 +203,12 @@ def repair(provider, state, answer, rows, scope, issues, options, execution):
                 },
                 state.get("input_context", []),
             ),
+            measurement_purpose="repair",
             options=options,
             execution=execution,
         )
-        state["input_tokens"] += turn.input_tokens
-        state["output_tokens"] += turn.output_tokens
+        state["input_tokens"] += turn.input_tokens or 0
+        state["output_tokens"] += turn.output_tokens or 0
         audit["message"] = (
             turn.message
         )  # Private only; never replay fabricated reasoning.

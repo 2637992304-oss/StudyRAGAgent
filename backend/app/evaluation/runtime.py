@@ -7,6 +7,11 @@ observer = ContextVar("agent_evaluation_observer", default=None)
 
 
 def observe(kind, **data):
+    from app.evaluation.telemetry import measurement
+
+    record = measurement.get()
+    if record is not None:
+        record.event(kind, **data)
     callback = observer.get()
     if callback is not None:
         callback({"kind": kind, **deepcopy(data)})

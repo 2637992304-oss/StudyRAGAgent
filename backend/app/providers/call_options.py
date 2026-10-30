@@ -23,11 +23,12 @@ class IncompleteResponse(RuntimeError):
 
 @dataclass(frozen=True)
 class CallOptions:
-    purpose: Literal["agent", "transcription", "citation_check"]
+    purpose: Literal["agent", "transcription", "citation_check", "finalize"]
     thinking: bool
     max_tokens: int
     timeout: float
     effort: str | None = None
+    allow_tools: bool = True
 
     def snapshot(self):
         return asdict(self)
@@ -59,6 +60,9 @@ class Execution:
     deadline: float
     cancelled: threading.Event = field(default_factory=threading.Event)
     clock: Callable[[], float] = time.monotonic
+    progress: queue.SimpleQueue = field(
+        default_factory=queue.SimpleQueue, compare=False
+    )
 
     @classmethod
     def start(cls, seconds: float):

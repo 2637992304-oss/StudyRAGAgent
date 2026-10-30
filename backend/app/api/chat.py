@@ -215,6 +215,8 @@ def message_data(db: Session, message: Message) -> dict:
         "thinking": message.thinking,
         "tool_policy": message.tool_policy,
         "reply_to_id": message.reply_to_id,
+        "measurements": message.measurements if allowed else None,
+        "measurement_status": "recorded" if message.measurements else "legacy_unknown",
         "input_tokens": message.input_tokens,
         "output_tokens": message.output_tokens,
         "agent_trace": [
@@ -242,6 +244,12 @@ def generation_error(exc: Exception) -> tuple[str, str]:
             "step_timeout": "本次模型调用超时，请稍后重试",
             "connect_timeout": "连接模型服务超时，请稍后重试",
             "read_timeout": "等待模型数据超时，请稍后重试",
+            "context_limit": "本次必要内容超出上下文预算，请缩小问题或资料范围",
+            "image_budget_unknown": (
+                "当前预算模式缺少图片用量估计，请配置图片预算或改用文字问题"
+            ),
+            "turn_budget_exhausted": "本轮调用预算已用尽，请缩小问题后重试",
+            "invalid_tool_protocol": "历史工具协议不完整，请新建对话后重试",
         }.get(exc.code, "本次处理超时，请稍后重试")
     if isinstance(exc, IncompleteResponse):
         return "truncated", "模型响应被截断或未完整结束，请重试或缩小问题"
@@ -437,6 +445,26 @@ def retrieve(
     result = search(
         db, chat, query, get_settings(), embed=embed_texts, table_query=table_question
     )
+    if get_settings().retrieval_adjacent_context:
+        from app.ingestion.context import adjacent_sources
+        from app.retrieval import Candidate
+
+        existing = {item.chunk.id: item for item in result.evidence}
+        result.evidence = [
+            existing.get(chunk.id) or Candidate(chunk, doc)
+            for chunk, doc in adjacent_sources(
+                db,
+                chat,
+                [(item.chunk, item.document) for item in result.evidence],
+                get_settings().retrieval_max_chars,
+            )
+        ]
+        additions = [item for item in result.evidence if item.chunk.id not in existing]
+        result.branches["adjacent_context"] = additions
+        ranked_ids = {item.chunk.id for item in result.ranked}
+        result.ranked.extend(
+            item for item in additions if item.chunk.id not in ranked_ids
+        )
     observer = retrieval_observer.get()
     if observer is not None:
         observer(result)
@@ -692,7 +720,86 @@ def stream_agent(
     options=None,
     execution=None,
 ):
+    from app.evaluation.telemetry import Measurement, measurement
+
+    record = Measurement(started)
+    record.progress = execution.progress if execution is not None else None
+    from contextvars import copy_context
+
+    context = copy_context()
+    context.run(measurement.set, record)
+    from app.context_budget import BudgetLedger, budget_state
+
+    context.run(budget_state.set, BudgetLedger(get_settings()))
+    iterator = _stream_agent(
+        owner_id,
+        session_id,
+        assistant_id,
+        query,
+        scope,
+        started,
+        options=options,
+        execution=execution,
+    )
+    try:
+        while True:
+            event = context.run(next, iterator, None)
+            if event is None:
+                break
+            yield event
+    finally:
+        try:
+            context.run(iterator.close)
+            with Session(get_engine()) as db:
+                assistant = db.get(Message, assistant_id)
+                outcome = (
+                    assistant.stop_reason or assistant.status
+                    if assistant
+                    else "deleted"
+                )
+                record.close(outcome)
+                if assistant and assistant.owner_id == owner_id:
+                    assistant.measurements = record.snapshot()
+                    assistant.input_tokens = assistant.measurements["usage"][
+                        "input_tokens"
+                    ]
+                    assistant.output_tokens = assistant.measurements["usage"][
+                        "output_tokens"
+                    ]
+                    assistant.first_token_ms = (
+                        round(record.first_output)
+                        if record.first_output is not None
+                        else None
+                    )
+                    assistant.generation_ms = round(
+                        sum(
+                            x["elapsed_ms"]
+                            for x in record.stages
+                            if x["stage"] == "agent"
+                        )
+                    )
+                    assistant.total_ms = round(record.finished)
+                    db.commit()
+        finally:
+            if not record.closed:
+                record.close("interrupted")
+
+
+def _stream_agent(
+    owner_id,
+    session_id,
+    assistant_id,
+    query,
+    scope,
+    started,
+    *,
+    options=None,
+    execution=None,
+):
     from app.agent import checked_answer, history_messages, run_agent
+    from app.evaluation.telemetry import measurement, span
+
+    record = measurement.get()
 
     execution = execution or Execution.start(get_settings().chat_deadline_seconds)
     options = options or profile("agent")
@@ -720,6 +827,7 @@ def stream_agent(
             history_length = len(history) + 1  # leading system message
             provider = get_llm_provider()
             state = None
+            yield sse("tool_status", {"message": "正在分析问题并生成回答"})
             for node, state in run_agent(
                 db,
                 chat,
@@ -803,9 +911,14 @@ def stream_agent(
             assistant.retrieval_query = " | ".join(
                 t.get("query", "") for t in state["trace"] if t.get("query")
             )
-            assistant.input_tokens = state["input_tokens"]
-            assistant.output_tokens = state["output_tokens"]
-            transcript = state["messages"][history_length:]
+            snapshot = record.snapshot()
+            assistant.input_tokens = snapshot["usage"]["input_tokens"]
+            assistant.output_tokens = snapshot["usage"]["output_tokens"]
+            current_user = max(
+                (i for i, m in enumerate(state["messages"]) if m.get("role") == "user"),
+                default=history_length - 1,
+            )
+            transcript = state["messages"][current_user + 1 :]
             assistant.protocol_state = {
                 "version": 2,
                 "validation": state.get("answer_checks", []),
@@ -818,13 +931,18 @@ def stream_agent(
                 ],
                 "replayable": bool(
                     transcript
+                    and not state.get("finalized")
                     and transcript[-1].get("role") == "assistant"
                     and transcript[-1].get("content") == answer
                 ),
             }
             assistant.total_ms = int((time.monotonic() - started) * 1000)
-            assistant.first_token_ms = assistant.total_ms
-            assistant.generation_ms = assistant.total_ms
+            assistant.first_token_ms = (
+                round(record.first_output) if record.first_output is not None else None
+            )
+            assistant.generation_ms = round(
+                sum(x["elapsed_ms"] for x in record.stages if x["stage"] == "agent")
+            )
             citations = []
             cited_labels = {label for label, _, _ in rows}
             for key, data in state.get("external", {}).items():
@@ -854,8 +972,11 @@ def stream_agent(
                 )
                 db.add(citation)
                 citations.append(citation_data(citation, chunk, doc))
-            db.commit()
+            with span("persistence"):
+                db.commit()
             # Only validated final content is public, never tentative tool turns.
+            if answer:
+                record.first_body = record.elapsed()
             for offset in range(0, len(answer), 80):
                 yield sse("answer_delta", {"text": answer[offset : offset + 80]})
             for citation in citations:
@@ -867,6 +988,7 @@ def stream_agent(
                     "status": assistant.status,
                     "stop_reason": reason,
                     "answer_method": state.get("answer_method", "llm"),
+                    "measurements": record.snapshot(),
                     "input_tokens": assistant.input_tokens,
                     "output_tokens": assistant.output_tokens,
                 },
@@ -946,6 +1068,11 @@ async def agent_events(iterator, execution, assistant_id):
             )
             while not task.done():
                 await asyncio.wait({task}, timeout=0.25)
+                progress = None
+                while not execution.progress.empty():
+                    progress = execution.progress.get()
+                if progress and not task.done() and not execution.cancelled.is_set():
+                    yield sse("tool_status", {"message": progress})
                 if not task.done():
                     try:
                         cancelled = await asyncio.wait_for(

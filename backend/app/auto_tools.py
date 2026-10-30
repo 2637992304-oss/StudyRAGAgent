@@ -253,10 +253,14 @@ class PublicQueryPlanner:
             },
         ]
         turn = complete_turn(
-            self.provider, messages, options=self.options, execution=self.execution
+            self.provider,
+            messages,
+            options=self.options,
+            execution=self.execution,
+            measurement_purpose="query_rewrite",
         )
-        self.input_tokens += turn.input_tokens
-        self.output_tokens += turn.output_tokens
+        self.input_tokens += turn.input_tokens or 0
+        self.output_tokens += turn.output_tokens or 0
         try:
             data = json.loads(
                 turn.message["content"]

@@ -173,6 +173,7 @@ class Message(Base):
     input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cost_estimate: Mapped[float | None] = mapped_column(nullable=True)
+    measurements: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     agent_trace: Mapped[list | None] = mapped_column(JSON, nullable=True)
     stop_reason: Mapped[str | None] = mapped_column(String(40), nullable=True)

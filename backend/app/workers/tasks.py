@@ -115,9 +115,17 @@ def _ingest_owned(job_id, token):
             parser_version = ("stage4-vision-v1:" + get_settings().llm_model)[:40]
         else:
             parser_version += (":layout" if pdf_layout else "") + (
-                ":heads" if pair_headings else ""
+                ":heads2" if pair_headings else ""
             )
-        chunks = make_chunks(parts, pair_headings=pair_headings, pdf_layout=pdf_layout)
+        aggregate_short = get_settings().ingestion_aggregate_short
+        if aggregate_short and not filename.lower().endswith(".pdf"):
+            parser_version += ":short1"
+        chunks = make_chunks(
+            parts,
+            pair_headings=pair_headings,
+            pdf_layout=pdf_layout,
+            aggregate_short=aggregate_short,
+        )
         if not chunks:
             raise ValueError("解析结果为空")
         if not set_stage(job_id, "embedding", 50, token):

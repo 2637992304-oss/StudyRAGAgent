@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from app.core.config import get_settings
+from app.evaluation.telemetry import measured
 
 
 @lru_cache(maxsize=2)
@@ -15,6 +16,7 @@ def _model(name: str):
     )
 
 
+@measured("local_embedding")
 def embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []

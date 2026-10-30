@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from contextvars import copy_context
 from copy import deepcopy
+from dataclasses import replace
 from typing import TypedDict
 from uuid import UUID
 
@@ -18,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.auto_tools import PublicQueryPlanner
 from app.core.config import get_settings
 from app.db.models import Attachment, ChatSession, Chunk, Document, Message
+from app.evaluation.telemetry import measured
 from app.external import (
     EXTERNAL_TOOLS,
     ExternalTools,
@@ -37,6 +39,7 @@ from app.providers.vision import image_block, inspect_image
 _SEARCH_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="course-search")
 
 
+@measured("retrieval")
 def timed_search(retrieve, db, chat, query, execution=None, *, question=None):
     """Bound waiting; late read-only work owns a separate session."""
     bind = db.get_bind()
@@ -164,6 +167,9 @@ class AgentState(TypedDict, total=False):
     answer_checks: list[dict]
     answer_method: str
     program_answer: str
+    finalized: bool
+    finalization_trigger: str
+    controlled_stop: bool
 
 
 def resolve_scope(
@@ -339,9 +345,24 @@ def run_agent(
     policy = policy or ToolPolicy()
     if scope == "strict":
         policy = ToolPolicy()
-    query_planner = PublicQueryPlanner(provider, policy, options, execution)
+    review_reserve = max(
+        settings.agent_review_reserve_seconds,
+        2 * profile("citation_check").timeout
+        + min(options.timeout, settings.agent_finalize_timeout),
+    )
+    tool_execution = (
+        replace(
+            execution,
+            deadline=execution.deadline
+            - review_reserve
+            - settings.agent_finalize_timeout,
+        )
+        if settings.agent_finalize_enabled
+        else execution
+    )
+    query_planner = PublicQueryPlanner(provider, policy, options, tool_execution)
     external_tools = ExternalTools(
-        db, chat, policy, execution, query_planner=query_planner
+        db, chat, policy, tool_execution, query_planner=query_planner
     )
     definitions = [TOOL, *external_tools.definitions()]
     grant_context = []
@@ -380,6 +401,118 @@ def run_agent(
     )
     graph = StateGraph(AgentState)
 
+    def stop(state, reason, message):
+        observe(
+            "finalization",
+            status="blocked",
+            reason=reason,
+            trigger=state.get("finalization_trigger"),
+        )
+        return {
+            "answer": "【限制】" + message,
+            "stop_reason": reason,
+            "calls": [],
+            "controlled_stop": True,
+            "finalized": state.get("finalized", False),
+        }
+
+    def finalize(state, trigger):
+        from app.context_budget import ContextLimit
+
+        state["finalization_trigger"] = trigger
+        if state.get("finalized"):
+            return stop(
+                state, "finalization_already_used", "本轮整理机会已用尽，请缩小问题。"
+            )
+        if execution.remaining() <= review_reserve + 1:
+            return stop(
+                state,
+                "finalization_time_insufficient",
+                "剩余时间不足以完成整理和核验，请缩小问题。",
+            )
+        has_images = any(
+            p.get("type") == "image_url"
+            for m in state.get("input_context", [])
+            for p in m.get("content", [])
+            if isinstance(p, dict)
+        )
+        if not state["evidence"] and (scope == "strict" or not has_images):
+            return stop(state, "no_evidence", "当前有效资料不足，请补充所需证据。")
+        probe = dict(
+            state,
+            answer="来源检查 "
+            + " ".join(f"[{i + 1}]" for i in range(len(state["evidence"]))),
+            stop_reason="answer",
+        )
+        _, _, reason = _validated_answer(db, chat, probe, scope, provider)
+        if reason not in {"answer", "limited"}:
+            return stop(state, reason, "来源已失效或超出范围，请重新选择资料后提问。")
+        state["finalized"] = True
+        observe("finalization", status="started", reason=trigger)
+        final_options = replace(
+            options,
+            purpose="finalize",
+            allow_tools=False,
+            timeout=min(options.timeout, settings.agent_finalize_timeout),
+        )
+        final_execution = replace(
+            execution, deadline=execution.deadline - review_reserve
+        )
+        final_messages = [
+            *state["messages"],
+            {
+                "role": "system",
+                "content": (
+                    "工具探索已结束。只能根据已取得且仍有效的证据回答，不再调用工具。"
+                    "完整说明可支持的结论和关键条件；部分有据时回答有据部分，明确缺失信息。"
+                    "证据不足时说明不足，不猜测补全，不输出内部推理。"
+                    "text_ref指向当前输入中同编号的先前完整正文，不代表新增证据。"
+                ),
+            },
+        ]
+        try:
+            turn = complete_turn(
+                provider,
+                final_messages,
+                None,
+                options=final_options,
+                execution=final_execution,
+                measurement_purpose="finalize",
+            )
+        except ContextLimit as exc:
+            return stop(
+                state, exc.code, "已有必要证据仍超出可用预算，请缩小问题或资料范围。"
+            )
+        except ExecutionStopped as exc:
+            if exc.code == "cancelled":
+                raise
+            return stop(
+                state,
+                "finalization_time_insufficient",
+                "整理未能在预留时间完成，本轮未发布未经核验的内容。",
+            )
+        if turn.message.get("tool_calls"):
+            return stop(
+                state,
+                "finalize_tool_request",
+                "整理阶段仍请求工具，本轮已停止，不执行额外工具。",
+            )
+        answer = turn.message.get("content", "")
+        return {
+            "messages": [*(turn.request_messages or final_messages), turn.message],
+            "answer": answer,
+            "calls": [],
+            "stop_reason": "limited"
+            if answer.startswith("【限制】")
+            else "clarify"
+            if answer.startswith("【需补充】")
+            else "answer",
+            "finalized": True,
+            "finalization_trigger": trigger,
+            "input_tokens": state["input_tokens"] + (turn.input_tokens or 0),
+            "output_tokens": state["output_tokens"] + (turn.output_tokens or 0),
+        }
+
     def decide(state):
         execution.check()
         if state.get("program_answer"):
@@ -397,6 +530,18 @@ def run_agent(
                 else "limited",
                 "calls": [],
             }
+        trigger = (
+            "exploration_limit"
+            if state["rounds"] >= settings.agent_max_rounds
+            else "no_progress"
+            if state["stalls"] >= 2
+            else "time_reserved"
+            if settings.agent_finalize_enabled
+            and tool_execution.deadline <= tool_execution.clock()
+            else ""
+        )
+        if trigger and settings.agent_finalize_enabled:
+            return finalize(state, trigger)
         if state["rounds"] >= settings.agent_max_rounds or state["stalls"] >= 2:
             return {
                 "answer": (
@@ -406,13 +551,24 @@ def run_agent(
                 "stop_reason": "limit",
                 "calls": [],
             }
-        turn = complete_turn(
-            provider,
-            state["messages"],
-            definitions,
-            options=options,
-            execution=execution,
-        )
+        try:
+            turn = complete_turn(
+                provider,
+                state["messages"],
+                definitions,
+                options=options,
+                execution=tool_execution,
+            )
+        except ExecutionStopped as exc:
+            if exc.code == "cancelled":
+                raise
+            if settings.agent_finalize_enabled and exc.code in {
+                "context_limit",
+                "turn_budget_exhausted",
+                "deadline_exceeded",
+            }:
+                return finalize(state, exc.code)
+            raise
         message = turn.message
         calls = message.get("tool_calls", [])
         answer = message.get("content", "")
@@ -426,13 +582,13 @@ def run_agent(
             else "answer"
         )
         return {
-            "messages": [*state["messages"], message],
+            "messages": [*(turn.request_messages or state["messages"]), message],
             "calls": calls,
             "answer": answer if not calls else "",
             "stop_reason": stop,
             "rounds": state["rounds"] + 1,
-            "input_tokens": state["input_tokens"] + turn.input_tokens,
-            "output_tokens": state["output_tokens"] + turn.output_tokens,
+            "input_tokens": state["input_tokens"] + (turn.input_tokens or 0),
+            "output_tokens": state["output_tokens"] + (turn.output_tokens or 0),
         }
 
     def execute(state):
@@ -449,10 +605,14 @@ def run_agent(
         # Multiple calls in one turn are executed in order; duplicates never execute.
         for call in state["calls"]:
             execution.check()
+            from app.evaluation.runtime import observe
+
+            observe("tool_call")
             started = time.monotonic()
             name, status, query_value = call["function"]["name"], "ok", ""
             result = {}
             try:
+                tool_execution.check()
                 if any(entry.get("call_id") == call["id"] for entry in trace):
                     raise ValueError("duplicate_call_id")
                 if name != "search_course_materials":
@@ -494,7 +654,7 @@ def run_agent(
                     raise ValueError("call_limit")
                 seen.append(signature)
                 retrieval = timed_search(
-                    retrieve, db, chat, query_value, execution, question=query
+                    retrieve, db, chat, query_value, tool_execution, question=query
                 )
                 rows, ids = retrieval
                 candidates = list(dict.fromkeys([*candidates, *ids]))
@@ -813,7 +973,12 @@ def _validated_answer(
         ):
             return "【限制】相关来源已失效，请重新提问。", [], "expired_evidence"
         rows.append((label, *row))
-    if scope == "strict" and reason not in {"clarify", "limit"} and not rows:
+    if (
+        scope == "strict"
+        and reason not in {"clarify", "limit"}
+        and not rows
+        and not state.get("controlled_stop")
+    ):
         return (
             "当前所选资料中没有足够依据，无法按严格资料要求给出结论。",
             [],
@@ -861,6 +1026,10 @@ def checked_answer(db, chat, state, scope, provider, *, execution=None, options=
 
     execution = execution or Execution.start(get_settings().chat_deadline_seconds)
     options = options or profile("agent")
+    if get_settings().agent_finalize_enabled:
+        options = replace(
+            options, timeout=min(options.timeout, get_settings().agent_finalize_timeout)
+        )
     answer, rows, reason = _validated_answer(db, chat, state, scope, provider)
     has_images = any(
         p.get("type") == "image_url"

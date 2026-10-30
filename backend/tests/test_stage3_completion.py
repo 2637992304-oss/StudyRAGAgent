@@ -35,7 +35,8 @@ def test_pairing_keeps_body_location_and_does_not_attach_unrelated_heading():
     assert chunks[0]["text"] == "# A 原子性定义"
     assert chunks[0]["section_path"] == "A"
     assert not is_heading(Chunk(**chunks[0]))
-    assert chunks[1]["text"] == "other page" and chunks[1]["page_start"] == 2
+    assert chunks[1]["text"] == "# B" and chunks[1]["section_path"] == "B"
+    assert chunks[2]["text"] == "other page" and chunks[2]["page_start"] == 2
     assert len(make_chunks(parts)) == 4  # Existing indexes/parser calls unchanged.
 
 

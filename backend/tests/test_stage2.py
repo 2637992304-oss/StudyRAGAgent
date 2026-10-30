@@ -277,7 +277,11 @@ def test_scoped_stream_persistence_and_isolation(library, monkeypatch):
             )
         )
         assert saved.candidate_chunk_ids == [citation["chunk_id"]]
-        assert saved.input_tokens == 100 and saved.output_tokens == 12
+        # The review double omits usage: known generation is not a whole-turn total.
+        assert saved.input_tokens is None and saved.output_tokens is None
+        assert saved.measurements["usage"]["state"] == "partial"
+        assert saved.measurements["usage"]["known_input_tokens"] == 100
+        assert saved.measurements["usage"]["known_output_tokens"] == 12
         doc = db.get(Document, docs[0])
         doc.status = "deleting"
         db.commit()
@@ -358,8 +362,8 @@ def test_no_evidence_and_provider_failure(library, monkeypatch, caplog):
         json={"content": "会超时吗"},
         headers=a,
     )
-    assert [name for name, _ in events(response)] == ["error"]
-    assert events(response)[0][1]["code"] == "llm_timeout"
+    assert [name for name, _ in events(response) if name != "tool_status"] == ["error"]
+    assert events(response)[-1][1]["code"] == "llm_timeout"
     assert "模型响应超时" in response.text
     assert "private upstream detail" not in response.text
     assert "private upstream detail" not in caplog.text

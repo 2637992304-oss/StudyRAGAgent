@@ -20,6 +20,7 @@ from app.providers.call_options import (
 
 # Opt-in in-process evaluation only. Never contains credentials or reasoning.
 call_observer = ContextVar("model_call_observer", default=None)
+request_budget = ContextVar("external_request_budget", default=None)
 
 
 @dataclass
@@ -30,6 +31,7 @@ class Delta:
     tool_calls: list[dict] = field(default_factory=list)
     finish_reason: str | None = None
     reasoning_content: str = ""
+    usage_details: dict | None = None
 
 
 class LLMProvider(Protocol):
@@ -88,8 +90,10 @@ class OpenAICompatibleLLM:
             "temperature": settings.llm_temperature,
             "max_tokens": settings.llm_max_output_tokens,
         }
-        if tools:
+        if tools and (options is None or options.allow_tools):
             payload["tools"] = tools
+        if options is not None and not options.allow_tools:
+            payload["tool_choice"] = "none"
         if settings.llm_thinking_mode != "default":
             payload["thinking"] = {"type": settings.llm_thinking_mode}
         timeout = settings.llm_timeout_seconds
@@ -133,55 +137,123 @@ class OpenAICompatibleLLM:
             )
         with httpx.Client(timeout=transport_timeout) as client:
             for attempt in range(2):
-                from app.evaluation.runtime import observe
+                if execution:
+                    execution.check()
+                if attempt:
+                    from app.context_budget import budget_state, estimate
+                    from app.evaluation.telemetry import call_purpose
 
+                    ledger = budget_state.get()
+                    if settings.context_budget_enabled and ledger is not None:
+                        size, _ = estimate(messages, tools, settings)
+                        ledger.reserve(
+                            size + payload["max_tokens"],
+                            call_purpose.get() or "legacy",
+                            retry=True,
+                        )
+                budget = request_budget.get()
+                if budget is not None:
+                    budget.reserve()
+                from app.evaluation.runtime import observe
+                from app.evaluation.telemetry import call_id, call_purpose
+
+                identity = call_id.get()
+                attempt_usage = {"input_tokens": None, "output_tokens": None}
+                outcome = "failed"
                 observe(
-                    "http_attempt", purpose=options.purpose if options else "legacy"
+                    "http_attempt",
+                    call_id=identity,
+                    attempt=attempt + 1,
+                    model=settings.llm_model,
+                    purpose=call_purpose.get()
+                    or (options.purpose if options else "legacy"),
                 )
-                with client.stream(
-                    "POST",
-                    url,
-                    headers={"Authorization": f"Bearer {settings.llm_api_key}"},
-                    json=payload,
-                ) as response:
-                    response_started = time.monotonic()
-                    if response.status_code == 503 and attempt == 0:
-                        if execution:
-                            execution.cancelled.wait(min(2, execution.remaining()))
-                            execution.check()
-                        else:
-                            time.sleep(2)
-                        continue
-                    response.raise_for_status()
-                    for event in parse_sse_lines(response.iter_lines()):
-                        if execution:
-                            execution.check()
-                        if time.monotonic() - response_started > timeout:
-                            if options:
-                                raise ExecutionStopped("step_timeout")
-                            raise TimeoutError("模型调用达到时间限制")
-                        if event.get("error"):
-                            raise RuntimeError("LLM 服务返回错误")
-                        for choice in event.get("choices", []):
-                            delta = choice.get("delta", {})
-                            content = delta.get("content")
-                            if isinstance(content, str) and content:
-                                yield Delta(text=content)
-                            if delta.get("tool_calls"):
-                                yield Delta(tool_calls=delta["tool_calls"])
-                            if delta.get("reasoning_content"):
-                                yield Delta(
-                                    reasoning_content=delta["reasoning_content"]
+                try:
+                    with client.stream(
+                        "POST",
+                        url,
+                        headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+                        json=payload,
+                    ) as response:
+                        response_started = time.monotonic()
+                        if response.status_code == 503 and attempt == 0:
+                            if execution:
+                                execution.cancelled.wait(min(2, execution.remaining()))
+                                execution.check()
+                            else:
+                                time.sleep(2)
+                            outcome = "retry"
+                            continue
+                        response.raise_for_status()
+                        for event in parse_sse_lines(response.iter_lines()):
+                            if execution:
+                                execution.check()
+                            if time.monotonic() - response_started > timeout:
+                                if options:
+                                    raise ExecutionStopped("step_timeout")
+                                raise TimeoutError("模型调用达到时间限制")
+                            if event.get("error"):
+                                raise RuntimeError("LLM 服务返回错误")
+                            for choice in event.get("choices", []):
+                                delta = choice.get("delta", {})
+                                content = delta.get("content")
+                                if isinstance(content, str) and content:
+                                    yield Delta(text=content)
+                                if delta.get("tool_calls"):
+                                    yield Delta(tool_calls=delta["tool_calls"])
+                                if delta.get("reasoning_content"):
+                                    yield Delta(
+                                        reasoning_content=delta["reasoning_content"]
+                                    )
+                                if choice.get("finish_reason"):
+                                    yield Delta(finish_reason=choice["finish_reason"])
+                            usage = event.get("usage")
+                            if isinstance(usage, dict):
+                                # Details are subsets of totals.
+                                details = {}
+                                for key, fields in (
+                                    ("prompt_tokens_details", ("cached_tokens",)),
+                                    (
+                                        "completion_tokens_details",
+                                        ("reasoning_tokens",),
+                                    ),
+                                ):
+                                    raw = usage.get(key)
+                                    if isinstance(raw, dict):
+                                        details[key] = {
+                                            k: raw[k]
+                                            for k in fields
+                                            if type(raw.get(k)) is int and raw[k] >= 0
+                                        }
+
+                                def count(key):
+                                    value = usage.get(key)
+                                    return (
+                                        value
+                                        if type(value) is int and value >= 0
+                                        else None
+                                    )
+
+                                attempt_usage.update(
+                                    input_tokens=count("prompt_tokens"),
+                                    output_tokens=count("completion_tokens"),
+                                    details=details,
                                 )
-                            if choice.get("finish_reason"):
-                                yield Delta(finish_reason=choice["finish_reason"])
-                        usage = event.get("usage")
-                        if usage:
-                            yield Delta(
-                                input_tokens=usage.get("prompt_tokens"),
-                                output_tokens=usage.get("completion_tokens"),
-                            )
-                    return
+                                yield Delta(
+                                    input_tokens=attempt_usage["input_tokens"],
+                                    output_tokens=attempt_usage["output_tokens"],
+                                    usage_details=details,
+                                )
+                        outcome = "completed"
+                        return
+                finally:
+                    observe(
+                        "http_result",
+                        call_id=identity,
+                        attempt=attempt + 1,
+                        outcome=outcome,
+                        **attempt_usage,
+                    )
 
 
 def get_llm_provider() -> LLMProvider:
@@ -191,11 +263,88 @@ def get_llm_provider() -> LLMProvider:
 @dataclass
 class Turn:
     message: dict[str, Any]
-    input_tokens: int = 0
-    output_tokens: int = 0
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    request_messages: list[dict] | None = None
 
 
 def complete_turn(
+    provider,
+    messages,
+    tools=None,
+    *,
+    options=None,
+    execution=None,
+    measurement_purpose=None,
+):
+    from app.evaluation.telemetry import model_call
+
+    purpose = measurement_purpose or (options.purpose if options else "legacy")
+    from app.context_budget import BudgetLedger, budget_state, prepare_messages
+    from app.evaluation.runtime import observe
+
+    settings = get_settings()
+    ledger = None
+    try:
+        if settings.context_budget_enabled:
+            prepared = prepare_messages(
+                messages,
+                tools,
+                options.max_tokens if options else settings.llm_max_output_tokens,
+                settings,
+                purpose=purpose,
+            )
+            ledger = budget_state.get()
+            if ledger is None:
+                ledger = BudgetLedger(settings)
+            reservation = prepared.estimated_input + (
+                options.max_tokens if options else settings.llm_max_output_tokens
+            )
+            ledger.reserve(reservation, purpose)
+            observe(
+                "context_budget",
+                purpose=purpose,
+                estimated_input=prepared.estimated_input,
+                deduplicated=prepared.deduplicated,
+                removed_groups=prepared.removed_groups,
+                estimate_method=prepared.estimate_method,
+                **ledger.snapshot(),
+            )
+            messages = prepared.messages
+    except ExecutionStopped as exc:
+        observe("context_budget", purpose=purpose, status="rejected", reason=exc.code)
+        raise
+    token = (
+        budget_state.set(ledger)
+        if ledger is not None and budget_state.get() is None
+        else None
+    )
+    try:
+        with model_call(purpose, get_settings().llm_model) as record:
+            turn = _complete_turn(
+                provider, messages, tools, options=options, execution=execution
+            )
+            from app.evaluation.telemetry import measurement
+
+            active = measurement.get()
+            if active:
+                with active.lock:
+                    if not active.closed:
+                        record.update(
+                            input_tokens=turn.input_tokens,
+                            output_tokens=turn.output_tokens,
+                        )
+            else:
+                record.update(
+                    input_tokens=turn.input_tokens, output_tokens=turn.output_tokens
+                )
+            return turn
+    finally:
+        if token is not None:
+            budget_state.reset(token)
+
+
+def _complete_turn(
     provider,
     messages: list[dict],
     tools: list[dict] | None = None,
@@ -230,11 +379,18 @@ def _collect_turn(provider, messages, tools, options=None, execution=None):
         tools=tools or [],
         purpose=options.purpose if options else "legacy",
     )
-    turn = Turn({})
+    turn = Turn({}, request_messages=messages)
     kwargs = {"options": options, "execution": execution} if options else {}
     for delta in provider.stream(messages, tools=tools, **kwargs):
         if execution:
             execution.check()
+        from app.evaluation.telemetry import measurement
+
+        record = measurement.get()
+        if record and (delta.text or delta.reasoning_content or delta.tool_calls):
+            with record.lock:
+                if not record.closed and record.first_output is None:
+                    record.first_output = record.elapsed()
         text.append(delta.text)
         reasoning.append(delta.reasoning_content)
         for item in delta.tool_calls:

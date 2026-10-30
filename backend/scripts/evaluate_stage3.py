@@ -158,7 +158,16 @@ def scope_ok(item, scope):
 
 
 def end_to_end(
-    client, case, scope, headers, db, pricing, *, document_keys=None, redact=False
+    client,
+    case,
+    scope,
+    headers,
+    db,
+    pricing,
+    *,
+    document_keys=None,
+    redact=False,
+    setup_session=None,
 ):
     start = time.perf_counter()
     session = client.post(
@@ -177,7 +186,11 @@ def end_to_end(
                 "total_ms": (time.perf_counter() - start) * 1000,
             }
         raise ValueError("Session creation failed")
+    if setup_session is not None:
+        setup_session(session.json()["id"], db)
     actual_context = []
+    fetched_context = []
+    context_kind = "model_input"
     prompt_hash = None
 
     from app.evaluation.runtime import observer
@@ -186,7 +199,7 @@ def end_to_end(
     captured = False
 
     def capture(event):
-        nonlocal prompt_hash, captured
+        nonlocal prompt_hash, captured, context_kind
         if event["kind"] == "http_attempt":
             requests.append(event["purpose"])
         elif event["kind"] in {"features", "table_verification"}:
@@ -199,6 +212,34 @@ def end_to_end(
                 json.dumps(event["messages"], ensure_ascii=False).encode()
             ).hexdigest()
             input_hashes.append({"purpose": event["purpose"], "sha256": prompt_hash})
+            from app.context_budget import visible_sources
+
+            for source in visible_sources(event["messages"]):
+                if not source.get("chunk_id"):
+                    continue
+                record = next(
+                    (
+                        row
+                        for row in fetched_context
+                        if row["chunk_id"] == source["chunk_id"]
+                        and row["label"] == source["label"]
+                    ),
+                    None,
+                )
+                if (
+                    record is None
+                    or record["text_sha256"]
+                    != hashlib.sha256(source["text"].encode()).hexdigest()
+                ):
+                    raise ValueError("Actual input source was not fetched in this turn")
+                if record not in actual_context:
+                    actual_context.append(record)
+        elif (
+            event["kind"] == "final"
+            and event.get("answer_method") == "verified_table_v1"
+        ):
+            context_kind = "program_proof"
+            actual_context[:] = fetched_context
         elif event["kind"] == "course_sources":
             captured = True
             for source in event["sources"]:
@@ -215,7 +256,7 @@ def end_to_end(
                 if source["text"] != chunk.text:
                     raise ValueError("Actual tool source mismatch")
                 existing = next(
-                    (x for x in actual_context if x["label"] == source["label"]), None
+                    (x for x in fetched_context if x["label"] == source["label"]), None
                 )
                 record = {
                     "label": source["label"],
@@ -234,7 +275,7 @@ def end_to_end(
                 if existing and existing != record:
                     raise ValueError("Source label changed during request")
                 if not existing:
-                    actual_context.append(record)
+                    fetched_context.append(record)
 
     token = observer.set(capture)
     try:
@@ -263,10 +304,20 @@ def end_to_end(
         code = (
             terminal[-1][1].get("code", "missing_done") if terminal else "missing_done"
         )
+        failed_message = (
+            db.get(Message, terminal[-1][1].get("message_id")) if terminal else None
+        )
         return {
             "status": "error",
             "error_type": code,
             "llm_calls": len(requests),
+            "model_input_hashes": input_hashes,
+            "actual_context": actual_context,
+            "fetched_context": fetched_context,
+            "measurements": failed_message.measurements if failed_message else None,
+            "input_tokens": failed_message.input_tokens if failed_message else None,
+            "output_tokens": failed_message.output_tokens if failed_message else None,
+            "cost": None,
             "total_ms": (time.perf_counter() - start) * 1000,
         }
     final = terminal[-1][1]
@@ -316,9 +367,17 @@ def end_to_end(
     message = db.get(Message, final["message_id"])
     refusal = refusal_observation(answer, final.get("status", "completed"))
     usage_in, usage_out = message.input_tokens, message.output_tokens
-    program_answer = final.get("answer_method") == "verified_table_v1"
+    measurements = message.measurements
     cost = None
-    if pricing and pricing["model"] == get_settings().llm_model:
+    if (
+        pricing
+        and pricing.get("version")
+        and pricing.get("currency")
+        and pricing["model"] == get_settings().llm_model
+        and measurements
+        and measurements["usage"]["state"] == "complete"
+        and all(c["model"] == pricing["model"] for c in measurements["calls"])
+    ):
         if usage_in is not None and usage_out is not None:
             cost = (
                 usage_in * pricing["input_per_million"]
@@ -328,6 +387,8 @@ def end_to_end(
     return {
         "answer": answer,
         "actual_context": actual_context,
+        "fetched_context": fetched_context,
+        "context_kind": context_kind,
         "actual_prompt_sha256": hashlib.sha256(
             json.dumps(input_hashes, sort_keys=True).encode()
         ).hexdigest()
@@ -337,18 +398,19 @@ def end_to_end(
         "feature_status": feature_status,
         "sse_terminal": final.get("status", "completed"),
         **refusal,
-        "first_answer_ms": message.first_token_ms,
+        "first_answer_ms": measurements.get("server_first_body_ms")
+        if measurements
+        else None,
+        "measurements": measurements,
         "total_ms": message.total_ms,
         "input_tokens": usage_in,
         "output_tokens": usage_out,
-        "usage_source": "not_applicable_program"
-        if program_answer and not requests
-        else "provider"
-        if usage_in is not None
-        else "unknown",
+        "usage_source": measurements["usage"]["state"]
+        if measurements
+        else "legacy_unknown",
         "answer_method": final.get("answer_method", "llm"),
         "cost": cost,
-        "llm_calls": len(requests),
+        "llm_calls": measurements["http_attempts"] if measurements else len(requests),
         "model_turns": len(model_inputs),
         "context_capture": "captured" if captured else "no_course_tool",
         "citations": citations,

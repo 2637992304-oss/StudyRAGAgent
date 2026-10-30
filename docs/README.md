@@ -13,6 +13,7 @@
 - [50 题公开/自制评测样本及第三方许可](stage3_completion_data/README.md)
 - [自制版面与 OCR 样本](stage3_completion_layout/README.md)
 - [第三方许可说明](../THIRD_PARTY_NOTICES.md)
+- [优化阶段5、6：预算、收尾与采用结论](optimization56.md)
 
 公开文档保留历史结论和失败，不将旧验收当作当前代码的全部功能证明。阶段 3 生产默认仍是 dense / 512 维 / pgvector；新的切块、混合检索、重排、表格核对均按原有开关区分，不自动重建用户资料。
 

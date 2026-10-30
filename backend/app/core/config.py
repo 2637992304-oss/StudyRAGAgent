@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-small-zh-v1.5"
     embedding_batch_size: int = Field(default=16, ge=1)
     embedding_threads: int = Field(default=2, ge=1)
+    ingestion_aggregate_short: bool = False
+    retrieval_adjacent_context: bool = False
     ingestion_pair_headings: bool = False
     ingestion_pdf_layout: bool = False
     ingestion_lease_seconds: int = Field(default=180, ge=3)
@@ -54,6 +56,15 @@ class Settings(BaseSettings):
     llm_connect_timeout: float = Field(default=10, gt=0)
     llm_read_timeout: float = Field(default=30, gt=0)
     agent_max_rounds: int = Field(default=4, ge=1, le=8)
+    context_budget_enabled: bool = False
+    context_request_tokens: int = Field(default=65536, ge=1000)
+    context_margin_tokens: int = Field(default=1024, ge=0)
+    context_image_tokens: int | None = Field(default=None, ge=1)
+    context_turn_tokens: int = Field(default=1048576, ge=1000)
+    context_turn_calls: int = Field(default=16, ge=5)
+    agent_finalize_enabled: bool = False
+    agent_finalize_timeout: float = Field(default=25, gt=0)
+    agent_review_reserve_seconds: float = Field(default=90, gt=0)
     agent_history_messages: int = Field(default=12, ge=2, le=30)
     agent_history_chars: int = Field(default=18000, ge=2000, le=50000)
     web_search_provider: Literal["tavily"] = "tavily"

@@ -140,6 +140,20 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
     if (!busy && sessionId) setQuestion(readDraft(draftKey))
     // Explicit conversation switches remount this view; a draft acquiring an ID must keep its text.
   }, [sessionId])
+  const bodyTiming = useRef<{ started: number; received: boolean; measured: boolean } | null>(null)
+  useLayoutEffect(() => {
+    const timing = bodyTiming.current
+    if (!timing?.received || timing.measured) return
+    const frame = requestAnimationFrame(() => {
+      if (!mounted.current || bodyTiming.current !== timing) return
+      timing.measured = true
+      const elapsed = performance.now() - timing.started
+      const element = scrollRef.current?.querySelector('.chat-message:last-child')
+      element?.setAttribute('data-first-body-ms', elapsed.toFixed(1))
+      window.dispatchEvent(new CustomEvent('studyrag:answer-visible', { detail: { elapsed_ms: elapsed, method: 'first-render-opportunity' } }))
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [messages])
   useLayoutEffect(() => {
     const area = scrollRef.current
     if (area && prependScroll.current) {
@@ -242,10 +256,11 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
       setMessages(current => [...current, userMessage, assistantMessage]); setQuestion(''); setDrafts([])
       try { sessionStorage.removeItem(draftKey) } catch { /* Optional draft persistence. */ }
       let refreshedTitle = false
+      bodyTiming.current = { started: performance.now(), received: false, measured: false }
       await askChat(target, content, ({ event, data }) => {
         if (!mounted.current) return
         if (!refreshedTitle) { refreshedTitle = true; onSessionsRefresh() }
-        if (event === 'answer_delta') { setProgress(''); setMessages(current => current.map((item, index) => index === current.length - 1 ? { ...item, content: item.content + String(data.text ?? '') } : item)) }
+        if (event === 'answer_delta') { if (String(data.text ?? '') && bodyTiming.current) bodyTiming.current.received = true; setProgress(''); setMessages(current => current.map((item, index) => index === current.length - 1 ? { ...item, content: item.content + String(data.text ?? '') } : item)) }
         if (event === 'citation') setMessages(current => current.map((item, index) => index === current.length - 1 ? { ...item, citations: [...item.citations, data as unknown as Citation] } : item))
         if (event === 'tool_status') setProgress(String(data.message ?? '正在处理…'))
       }, controller.signal, drafts.map(a => a.id), requestThinking)

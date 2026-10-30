@@ -43,6 +43,8 @@ backups/
 # and the exact non-private fixtures required to reproduce automated tests.
 /docs/**
 !/docs/README.md
+!/docs/optimization34.md
+!/docs/optimization56.md
 !/docs/frontend-workspace.md
 !/docs/stage6/
 !/docs/stage6/**
