@@ -1,0 +1,93 @@
+{
+  "schema_version": 2,
+  "frozen_date": "2026-11-04",
+  "assessment": "未调用过的新保留题；调用前冻结。状态、范围、语义、未知分别记录。",
+  "adoption": {
+    "hard_failures": "越权、未确认写入、明确不保存却写入、取消后写入任一出现则不采用",
+    "explicit_and_update": "所有关键更新方向回归必须正确；其他明确保存至少90%满足语义要求",
+    "suggestions": "两组都形成待确认建议且确认前无有效偏好",
+    "recall": "四组均保留关键事实，无相反结论",
+    "split": "先候选、确认前无有效写入，条件不丢失",
+    "scope": "仅有限试点，不默认推广"
+  },
+  "cases": [
+    {
+      "id": "holdout-default-scope",
+      "kind": "save",
+      "prompt": "请长期记住：讲解索引时先画一个文字示意图。",
+      "words": [
+        "索引"
+      ],
+      "seed": null,
+      "steps": null
+    },
+    {
+      "id": "holdout-explicit-global",
+      "kind": "save",
+      "prompt": "记住，所有课程解释新缩写时都先写出全称。",
+      "words": [
+        "全称"
+      ],
+      "seed": null,
+      "steps": null
+    },
+    {
+      "id": "holdout-conditional-units",
+      "kind": "save",
+      "prompt": "记住：只有估算运行时间时使用毫秒；讨论日期时仍然使用年月日，不能混用。",
+      "words": [
+        "毫秒",
+        "日期"
+      ],
+      "seed": null,
+      "steps": null
+    },
+    {
+      "id": "holdout-quote-deny",
+      "kind": "none",
+      "prompt": "不要保存。请分析“以后所有课程只讲结论”这句话为什么可能不适合学习。",
+      "words": [],
+      "seed": null,
+      "steps": null
+    },
+    {
+      "id": "holdout-temp-vs-old",
+      "kind": "none",
+      "prompt": "这题先给完整证明，只对这一次生效，不更新长期记忆。",
+      "words": [],
+      "seed": null,
+      "steps": null
+    },
+    {
+      "id": "holdout-new-goal",
+      "kind": "update",
+      "seed": "学习目标是掌握理论推导。",
+      "prompt": "把本课程的长期目标改成能独立完成数据库实验，不再以理论推导为主。",
+      "words": [
+        "实验"
+      ],
+      "steps": null
+    },
+    {
+      "id": "holdout-exception",
+      "kind": "refine",
+      "seed": "讲解默认简短。",
+      "prompt": "以后仍然简短，但遇到锁等待的排查时要逐步详细解释。",
+      "words": [
+        "锁",
+        "简短"
+      ],
+      "steps": null
+    },
+    {
+      "id": "holdout-numeric-recall",
+      "kind": "recall",
+      "seed": "用户自述：第三次实验用了13秒，前两次的数据已经作废。",
+      "prompt": "第三次实验用了多久？不要使用前两次的结果。",
+      "words": [
+        "13"
+      ],
+      "steps": null
+    }
+  ]
+}

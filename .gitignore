@@ -42,6 +42,14 @@ backups/
 # Historical artifacts remain on this machine. Publish only reviewed reports
 # and the exact non-private fixtures required to reproduce automated tests.
 /docs/**
+!/docs/stage7/
+!/docs/stage7/README.md
+!/docs/stage7/progress.md
+!/docs/stage7/report.md
+!/docs/stage7/free-text-design.md
+!/docs/stage7/free-text-progress.md
+!/docs/stage7/free-text-report.md
+!/docs/stage7/free-text-results.json
 !/docs/README.md
 !/docs/optimization34.md
 !/docs/optimization56.md

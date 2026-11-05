@@ -224,6 +224,12 @@ def run(stop):
     while not stop.is_set():
         try:
             recover_once()
+            from app.memory.summary import dispatch
+
+            dispatch()
+            from app.memory.text_index import dispatch as dispatch_text_index
+
+            dispatch_text_index()
         except Exception as exc:
             logger.warning("ingestion_recovery_unavailable type=%s", type(exc).__name__)
         stop.wait(get_settings().ingestion_recovery_interval)

@@ -7,6 +7,7 @@
 - 单个 LangGraph Agent 按需使用课程检索、公开网页搜索、GitHub 只读工具。
 - 服务端校验来源权限与编号，AI 核对答案；必要时进行一次有界修正。
 - 本地 Docker 部署、隔离备份恢复、自动化测试与 GitHub Actions。
+- 长期记忆提供自由文本新模式、待确认建议及会话后台摘要，日常操作在聊天和管理弹窗完成；支持长度提示、整理预览、范围、版本及撤销。公共配置仍使用 legacy 兼容模式、能力默认关闭；自由文本迁移与限制见[新版契约](docs/stage7/free-text-design.md)和[验收记录](docs/stage7/free-text-report.md)，业务切换需单独授权。
 
 公开仓库：[2637992304-oss/StudyRAGAgent](https://github.com/2637992304-oss/StudyRAGAgent)。质量与边界见[验收报告](docs/stage6/report.md)。
 

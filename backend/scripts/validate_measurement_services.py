@@ -25,7 +25,7 @@ def run(*, extra_checks=None, output_group="optimization34", skip_full=False):
     identity = uuid4().hex
     prefix = "studyrag-opt34-" + identity[:12]
     root = Path(__file__).resolve().parents[2]
-    if output_group not in {"optimization34", "optimization56"}:
+    if output_group not in {"optimization34", "optimization56", "stage7"}:
         raise ValueError("invalid_validation_group")
     evidence = root / ".runtime" / output_group
     evidence.mkdir(parents=True, exist_ok=True)

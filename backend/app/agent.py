@@ -11,14 +11,22 @@ from dataclasses import replace
 from typing import TypedDict
 from uuid import UUID
 
+from fastapi import HTTPException
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.auto_tools import PublicQueryPlanner
 from app.core.config import get_settings
-from app.db.models import Attachment, ChatSession, Chunk, Document, Message
+from app.db.models import (
+    Attachment,
+    ChatSession,
+    Chunk,
+    Document,
+    MemorySuggestion,
+    Message,
+)
 from app.evaluation.telemetry import measured
 from app.external import (
     EXTERNAL_TOOLS,
@@ -147,6 +155,10 @@ class SearchArgs(BaseModel):
 
 
 class AgentState(TypedDict, total=False):
+    memory_staged: list[dict]
+    memory_only: bool
+    memory_summary_snapshot: dict | None
+    memory_items_snapshot: list
     messages: list[dict]
     calls: list[dict]
     rounds: int
@@ -297,6 +309,21 @@ def history_messages(db, chat, before_id: str, policy=None) -> list[dict]:
                 and external_allowed(db, chat, source.data, policy)
                 for source_id in protocol.get("external_ids", [])
             )
+            from app.memory.summary import valid_dependencies
+
+            valid_memory = valid_dependencies(
+                db,
+                chat,
+                {
+                    "scope": chat.document_ids,
+                    "memory_items": {
+                        item["id"]: str(item["version"])
+                        for item in protocol.get("memory_items", [])
+                    },
+                },
+            )
+            if not valid_memory:
+                text = "[历史回答依赖的记忆已经变化，旧正文和工具结果不参与当前上下文]"
             if (
                 protocol.get("version") in {1, 2}
                 and row.reply_to_id in available_users
@@ -304,6 +331,7 @@ def history_messages(db, chat, before_id: str, policy=None) -> list[dict]:
                 and transcript
                 and set(source_ids) == valid_sources
                 and valid_external
+                and valid_memory
                 and used + protocol_chars <= settings.agent_history_chars
             ):
                 # Replay entire actual provider turns, never invented empty reasoning.
@@ -337,6 +365,7 @@ def run_agent(
     options=None,
     execution=None,
     policy=None,
+    memory_user_id=None,
 ):
     """Yield graph updates. Content is buffered until evidence checks complete."""
     settings = get_settings()
@@ -364,7 +393,91 @@ def run_agent(
     external_tools = ExternalTools(
         db, chat, policy, tool_execution, query_planner=query_planner
     )
-    definitions = [TOOL, *external_tools.definitions()]
+    from app.memory import service as memory
+
+    text_memory = settings.memory_engine == "text"
+    if text_memory:
+        from app.memory import text_graph as memory
+    propose_name = "propose_memory" if text_memory else "propose_preference"
+
+    memory_current = db.get(Message, memory_user_id) if memory_user_id else None
+    if memory_current and (
+        memory_current.owner_id != chat.owner_id
+        or memory_current.session_id != chat.id
+        or memory_current.role != "user"
+    ):
+        memory_current = None
+    memory_staged = []
+    memory_batch_failed = [False]
+    memory_context = (
+        (
+            memory.context_data(db, chat, query, policy=policy)
+            if text_memory
+            else memory.context_data(db, chat)
+        )
+        if (settings.memory_preferences_enabled and settings.memory_engine != "off")
+        or settings.memory_summary_enabled
+        else None
+    )
+    if (
+        memory_current
+        and settings.memory_preferences_enabled
+        and settings.memory_engine != "off"
+    ):
+        recent_ids = list(
+            db.scalars(
+                select(Message.id)
+                .where(Message.session_id == chat.id, Message.owner_id == chat.owner_id)
+                .order_by(Message.created_at.desc(), Message.id.desc())
+                .limit(settings.agent_history_messages)
+            )
+        )
+        recent_users = list(
+            db.scalars(
+                select(Message)
+                .where(
+                    Message.session_id == chat.id,
+                    Message.owner_id == chat.owner_id,
+                    Message.role == "user",
+                    Message.status == "completed",
+                    Message.id.in_(recent_ids),
+                )
+                .order_by(Message.created_at.desc(), Message.id.desc())
+                .limit(12)
+            )
+        )
+        memory_context = {
+            **(memory_context or {}),
+            "source_messages": (
+                memory.evidence_messages(db, chat)
+                if text_memory
+                else [
+                    {"id": m.id, "text": m.content[:500]}
+                    for m in reversed(recent_users)
+                ]
+            ),
+            "pending_suggestions": [
+                memory.suggestion_data(db, c)
+                for c in db.scalars(
+                    select(MemorySuggestion)
+                    .where(MemorySuggestion.session_id == chat.id)
+                    .limit(30)
+                )
+                if memory.suggestion_live(db, c)
+            ],
+        }
+    if memory_context:
+        history = [memory.context_block(memory_context), *history]
+    memory_read_snapshots = list((memory_context or {}).get("items", []))
+    definitions = [
+        TOOL,
+        *external_tools.definitions(),
+        *(
+            memory.tool_definitions()
+            if memory_current and settings.memory_engine != "off"
+            else []
+        ),
+    ]
     grant_context = []
     for grant_id in policy.grant_ids:
         grant = live_grant(db, chat, grant_id)
@@ -500,6 +613,7 @@ def run_agent(
         answer = turn.message.get("content", "")
         return {
             "messages": [*(turn.request_messages or final_messages), turn.message],
+            "input_context": input_snapshot(turn.request_messages or final_messages),
             "answer": answer,
             "calls": [],
             "stop_reason": "limited"
@@ -514,6 +628,48 @@ def run_agent(
         }
 
     def decide(state):
+        pending_cards = (memory_context or {}).get("pending_suggestions", [])
+        if (
+            state["rounds"] == 0
+            and memory_current
+            and len(pending_cards) == 1
+            and memory.pure_confirmation(memory_current.content)
+        ):
+            card = pending_cards[0]
+            return {
+                "calls": [
+                    {
+                        "id": memory_current.id + ":confirm",
+                        "type": "function",
+                        "function": {
+                            "name": "confirm_memory"
+                            if text_memory
+                            else "confirm_preference",
+                            "arguments": json.dumps(
+                                {
+                                    **(
+                                        {}
+                                        if text_memory
+                                        else {
+                                            "key": card["key"],
+                                            "value": card["value"],
+                                        }
+                                    ),
+                                    "suggestion_id": card["id"],
+                                    "memory_only": True,
+                                }
+                            ),
+                        },
+                    }
+                ],
+                "rounds": state["rounds"] + 1,
+            }
+        if state.get("memory_only"):
+            return {
+                "calls": [],
+                "answer": "偏好管理请求已处理，结果见下方记忆回执。",
+                "stop_reason": "answer",
+            }
         execution.check()
         if state.get("program_answer"):
             return {
@@ -583,6 +739,7 @@ def run_agent(
         )
         return {
             "messages": [*(turn.request_messages or state["messages"]), message],
+            "input_context": input_snapshot(turn.request_messages or state["messages"]),
             "calls": calls,
             "answer": answer if not calls else "",
             "stop_reason": stop,
@@ -615,6 +772,35 @@ def run_agent(
                 tool_execution.check()
                 if any(entry.get("call_id") == call["id"] for entry in trace):
                     raise ValueError("duplicate_call_id")
+                if name in memory.TOOL_NAMES:
+                    if memory_batch_failed[0]:
+                        raise ValueError("memory_batch_rejected")
+                    if not memory_current or not settings.memory_preferences_enabled:
+                        raise ValueError("memory_disabled")
+                    if any(
+                        e.get("tool") in memory.TOOL_NAMES - {"find_memories"}
+                        for e in state["trace"]
+                    ):
+                        raise ValueError("memory_batch_limit")
+                    result = memory.stage_tool(
+                        db,
+                        chat,
+                        memory_current,
+                        call,
+                        memory_staged,
+                        **(
+                            {
+                                "evidence": state.get("evidence", []),
+                                "memory_snapshots": memory_read_snapshots,
+                            }
+                            if text_memory
+                            else {}
+                        ),
+                    )
+                    status = result["status"]
+                    if text_memory and name == "find_memories":
+                        memory_read_snapshots.extend(result.get("items", []))
+                    continue
                 if name != "search_course_materials":
                     # No provider/HTTP call occurs until both registry and policy pass.
                     if not external_tools.permitted(name):
@@ -785,6 +971,13 @@ def run_agent(
                         "任务缺少可公开的具体意图，私人资料/图片/代码未发送。"
                         "请用户提供公开概念；确需私人片段时先列出具体短片段请求单独确认。"
                     )
+            except HTTPException as exc:
+                status = "rejected"
+                result = {
+                    "status": status,
+                    "code": "memory_validation",
+                    "message": str(exc.detail),
+                }
             except ValueError:
                 status = "rejected"
                 result = {
@@ -810,6 +1003,9 @@ def run_agent(
                     "message": "检索暂时不可用，可以说明限制，不要编造结果。",
                 }
             finally:
+                if name in memory.TOOL_NAMES and status != "staged":
+                    memory_batch_failed[0] = True
+                    memory_staged.clear()
                 if "sources" in result:
                     observe("course_sources", sources=result["sources"])
                 trace.append(
@@ -839,6 +1035,7 @@ def run_agent(
         query_planner.input_tokens = query_planner.output_tokens = 0
         return {
             "messages": messages,
+            "memory_items_snapshot": list(memory_read_snapshots),
             "program_answer": program_answer,
             "trace": trace,
             "seen": seen,
@@ -848,16 +1045,254 @@ def run_agent(
             "input_tokens": state["input_tokens"] + public_input,
             "output_tokens": state["output_tokens"] + public_output,
             "progress": progress,
-            "stalls": state["stalls"] + 1
+            "memory_staged": list(memory_staged),
+            "memory_only": bool(memory_staged)
+            and all(x.get("memory_only") for x in memory_staged)
+            and all(c["function"]["name"] in memory.TOOL_NAMES for c in state["calls"]),
+            "stalls": state["stalls"]
+            if all(c["function"]["name"] in memory.TOOL_NAMES for c in state["calls"])
+            else state["stalls"] + 1
             if len(evidence) == previous_count and len(progress) == previous_progress
             else 0,
         }
 
+    def memory_action_check(state):
+        """Semantic fallback inside the same graph and original round budget."""
+        if (
+            not text_memory
+            or not memory_current
+            or memory_staged
+            or memory_batch_failed[0]
+            or not settings.memory_preferences_enabled
+            or settings.memory_engine != "text"
+            or state.get("finalized")
+            or state.get("stop_reason") not in {"answer", "clarify"}
+            or state["rounds"] >= settings.agent_max_rounds
+        ):
+            return {}
+        # This only schedules a semantic check; it never authorizes a write.
+        if not any(
+            term in query
+            for term in ("以后", "今后", "记住", "长期", "改为", "改成", "删除")
+        ):
+            return {}
+        execution.check()
+        try:
+            turn = complete_turn(
+                provider,
+                [
+                    {
+                        "role": "system",
+                        "content": memory.MEMORY_INSTRUCTIONS
+                        + "\n本步骤检查是否漏掉记忆动作。"
+                        "只根据user_message判断授权，"
+                        "不要把candidate_answer当授权。明确长期要求必须调用工具，无需再次确认；"
+                        "临时、否定、假设和普通引述回复SKIP。缺少目标ID或有歧义时SKIP，不猜测。",
+                    },
+                    {
+                        "role": "user",
+                        "content": json.dumps(
+                            {
+                                "user_message": memory_current.content,
+                                "candidate_answer": state.get("answer", ""),
+                                "memory": memory_context,
+                            },
+                            ensure_ascii=False,
+                        ),
+                    },
+                ],
+                [
+                    d
+                    for d in memory.tool_definitions()
+                    if d["function"]["name"] != "find_memories"
+                ],
+                options=profile("memory_action"),
+                execution=tool_execution,
+            )
+        except Exception as exc:
+            import httpx
+
+            if (
+                isinstance(exc, httpx.HTTPStatusError)
+                and exc.response.status_code == 402
+            ):
+                raise
+            return {
+                "rounds": state["rounds"] + 1,
+                "trace": [
+                    *state["trace"],
+                    {"tool": "memory_action_check", "status": "unavailable"},
+                ],
+            }
+        updates = {
+            "rounds": state["rounds"] + 1,
+            "input_tokens": state["input_tokens"] + (turn.input_tokens or 0),
+            "output_tokens": state["output_tokens"] + (turn.output_tokens or 0),
+        }
+        calls = turn.message.get("tool_calls", [])
+        try:
+            for call in calls:
+                if call["function"]["name"] not in memory.TOOL_NAMES:
+                    raise ValueError("invalid_memory_check_tool")
+                memory.stage_tool(
+                    db,
+                    chat,
+                    memory_current,
+                    call,
+                    memory_staged,
+                    evidence=state.get("evidence", []),
+                    memory_snapshots=memory_read_snapshots,
+                )
+        except Exception:
+            memory_staged.clear()
+            memory_batch_failed[0] = True
+        updates.update(
+            memory_staged=list(memory_staged),
+            memory_only=bool(memory_staged)
+            and all(c.get("memory_only") for c in memory_staged),
+            trace=[
+                *state["trace"],
+                {
+                    "tool": "memory_action_check",
+                    "status": "staged" if memory_staged else "no_write",
+                },
+            ],
+        )
+        return updates
+
+    def suggestion_check(state):
+        """One bounded checkpoint in this graph, not another agent or auto-save.
+
+        Only every third user turn, with no pending/staged memory operation. It
+        consumes an existing round and deadline; failure leaves the answer intact.
+        """
+        if (
+            not memory_current
+            or not settings.memory_suggestions_enabled
+            or not settings.memory_preferences_enabled
+            or memory_staged
+            or memory_batch_failed[0]
+            or state.get("finalized")
+            or state.get("stop_reason") not in {"answer", "clarify"}
+            or state["rounds"] >= settings.agent_max_rounds
+            or len((memory_context or {}).get("source_messages", [])) < 3
+            or (memory_context or {}).get("pending_suggestions")
+        ):
+            return {}
+        target = "course:" + chat.course_id
+        if not all(
+            memory.permitted(db, chat.owner_id, target, flag)
+            for flag in ("write", "suggest")
+        ):
+            return {}
+        count = db.scalar(
+            select(func.count())
+            .select_from(Message)
+            .where(
+                Message.session_id == chat.id,
+                Message.owner_id == chat.owner_id,
+                Message.role == "user",
+                Message.status == "completed",
+            )
+        )
+        if count % 3:
+            return {}
+        updates = {}
+        try:
+            turn = complete_turn(
+                provider,
+                [
+                    {
+                        "role": "system",
+                        "content": memory.MEMORY_INSTRUCTIONS
+                        + "\n本步骤只检查是否提出待确认偏好，不回答课程问题。"
+                        f"三个用户回合一致表达时调用{propose_name}；"
+                        "即使只说这题，也可以邀请用户确认长期使用。"
+                        "已有偏好、明确拒绝、引述或不足三个独立回合时只回复SKIP。"
+                        "source_ids取下面真实用户消息ID。不得调用保存或确认。",
+                    },
+                    {
+                        "role": "user",
+                        "content": json.dumps(memory_context, ensure_ascii=False),
+                    },
+                ],
+                [
+                    d
+                    for d in memory.tool_definitions()
+                    if d["function"]["name"] == propose_name
+                ],
+                options=profile("memory_suggestion"),
+                execution=tool_execution,
+            )
+            updates = {
+                "rounds": state["rounds"] + 1,
+                "input_tokens": state["input_tokens"] + (turn.input_tokens or 0),
+                "output_tokens": state["output_tokens"] + (turn.output_tokens or 0),
+            }
+            calls = turn.message.get("tool_calls", [])
+            updates["trace"] = [
+                *state["trace"],
+                {"tool": "memory_suggestion_check", "status": "evaluated"},
+            ]
+            if len(calls) == 1 and calls[0]["function"]["name"] == propose_name:
+                observe("tool_call")
+                started = time.monotonic()
+                memory.stage_tool(
+                    db,
+                    chat,
+                    memory_current,
+                    calls[0],
+                    memory_staged,
+                    **(
+                        {
+                            "evidence": state.get("evidence", []),
+                            "memory_snapshots": memory_read_snapshots,
+                        }
+                        if text_memory
+                        else {}
+                    ),
+                )
+                updates.update(
+                    memory_staged=list(memory_staged),
+                    trace=[
+                        *state["trace"],
+                        {
+                            "tool": propose_name,
+                            "status": "staged",
+                            "elapsed_ms": int((time.monotonic() - started) * 1000),
+                            "checkpoint": True,
+                        },
+                    ],
+                )
+        except ExecutionStopped as exc:
+            if exc.code == "cancelled":
+                raise
+        except Exception as exc:
+            import httpx
+
+            if (
+                isinstance(exc, httpx.HTTPStatusError)
+                and exc.response.status_code == 402
+            ):
+                raise
+            # Optional advice cannot turn a valid course answer into a failure.
+            updates["trace"] = [
+                *state["trace"],
+                {"tool": "memory_suggestion_check", "status": "rejected"},
+            ]
+        return updates
+
     graph.add_node("decide", decide)
     graph.add_node("tools", execute)
+    graph.add_node("suggestion_check", suggestion_check)
+    graph.add_node("memory_action_check", memory_action_check)
     graph.add_edge(START, "decide")
-    graph.add_conditional_edges("decide", lambda s: "tools" if s.get("calls") else END)
+    graph.add_conditional_edges(
+        "decide", lambda s: "tools" if s.get("calls") else "memory_action_check"
+    )
     graph.add_edge("tools", "decide")
+    graph.add_edge("memory_action_check", "suggestion_check")
+    graph.add_edge("suggestion_check", END)
     from app.answer_review import input_snapshot
 
     initial = AgentState(
@@ -868,6 +1303,11 @@ def run_agent(
             {
                 "role": "system",
                 "content": SYSTEM
+                + (
+                    memory.MEMORY_INSTRUCTIONS
+                    if settings.memory_preferences_enabled
+                    else ""
+                )
                 + extra_system.removeprefix(SYSTEM_PROMPT)
                 + "\n本轮回答范围："
                 + scope
@@ -909,6 +1349,10 @@ def run_agent(
         external={},
         progress=[],
         policy=policy.snapshot(),
+        memory_staged=[],
+        memory_only=False,
+        memory_summary_snapshot=(memory_context or {}).get("summary"),
+        memory_items_snapshot=(memory_context or {}).get("items", []),
     )
     state = dict(initial)
     for update in graph.compile().stream(
@@ -917,6 +1361,8 @@ def run_agent(
         stream_mode="updates",
     ):
         for node, values in update.items():
+            if not values:
+                continue
             state.update(values)
             yield node, state.copy()
 
@@ -978,6 +1424,7 @@ def _validated_answer(
         and reason not in {"clarify", "limit"}
         and not rows
         and not state.get("controlled_stop")
+        and not state.get("memory_only")
     ):
         return (
             "当前所选资料中没有足够依据，无法按严格资料要求给出结论。",

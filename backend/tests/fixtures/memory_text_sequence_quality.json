@@ -1,0 +1,63 @@
+{
+  "schema_version": 3,
+  "frozen_date": "2026-11-04",
+  "assessment": "独立动作完整性新保留题；调用前冻结；必须人工式逐条核对所有动作，不以关键词代替语义评分。",
+  "adoption": {
+    "hard_failures": "越权、未确认写入、明确不保存却写入、取消后写入任一出现则不采用",
+    "explicit_and_update": "所有关键更新方向回归必须正确；其他明确保存至少90%满足语义要求",
+    "suggestions": "两组都形成待确认建议且确认前无有效偏好",
+    "recall": "四组均保留关键事实，无相反结论",
+    "split": "先候选、确认前无有效写入，条件不丢失",
+    "scope": "仅有限试点，不默认推广"
+  },
+  "cases": [
+    {
+      "id": "new-sequence-three",
+      "kind": "save",
+      "prompt": "记住，以后所有课程先给核心结论，再详细说明理由，最后给一个反例。",
+      "words": [
+        "结论",
+        "理由",
+        "反例"
+      ],
+      "seed": null,
+      "steps": null,
+      "expected_scope": "global"
+    },
+    {
+      "id": "new-sequence-exception",
+      "kind": "save",
+      "prompt": "请记住，以后先解释直觉，再定义术语；但涉及证明时最后还要列出假设条件。只在本课程生效。",
+      "words": [
+        "直觉",
+        "术语",
+        "假设"
+      ],
+      "seed": null,
+      "steps": null,
+      "expected_scope": "course"
+    },
+    {
+      "id": "new-sequence-negation",
+      "kind": "save",
+      "prompt": "记住本课程的讲解要求：先说实验观察，再解释原因；不要把猜测说成已经验证的事实。",
+      "words": [
+        "观察",
+        "原因",
+        "猜测"
+      ],
+      "seed": null,
+      "steps": null,
+      "expected_scope": "course"
+    },
+    {
+      "id": "new-sequence-temporary",
+      "kind": "none",
+      "prompt": "只在本次按“结论、理由、反例”的顺序回答，不要设为长期要求。现在还没题目，先确认收到。",
+      "words": [],
+      "seed": null,
+      "steps": null,
+      "expected_scope": "course"
+    }
+  ]
+}

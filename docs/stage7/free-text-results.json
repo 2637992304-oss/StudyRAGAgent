@@ -1,0 +1,574 @@
+{
+  "date": "2026-11-04",
+  "assessment": "程序断言与Codex辅助语义阅读分开；非独立人工评审，不代表真实学习成效提升",
+  "ledger": {
+    "baseline": 319,
+    "total": 763,
+    "new_attempts": 444,
+    "declared_limit": 819
+  },
+  "usage": {
+    "http_attempts": 444,
+    "known_input_tokens": 3011611,
+    "known_output_tokens": 44936,
+    "unknown_attempts": 1,
+    "usage_states": {
+      "complete": 249,
+      "missing": 1
+    }
+  },
+  "runs": [
+    {
+      "run": "quality-auto",
+      "cases": 32,
+      "reserved": 51,
+      "http_attempts": 51,
+      "known_input_tokens": 479390,
+      "known_output_tokens": 6221,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-final",
+      "cases": 32,
+      "reserved": 66,
+      "http_attempts": 66,
+      "known_input_tokens": 382823,
+      "known_output_tokens": 7077,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-long-fix",
+      "cases": 1,
+      "reserved": 2,
+      "http_attempts": 2,
+      "known_input_tokens": 16097,
+      "known_output_tokens": 243,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-release",
+      "cases": 32,
+      "reserved": 71,
+      "http_attempts": 71,
+      "known_input_tokens": 471611,
+      "known_output_tokens": 6992,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-scope-final",
+      "cases": 32,
+      "reserved": 65,
+      "http_attempts": 65,
+      "known_input_tokens": 431757,
+      "known_output_tokens": 6888,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-holdout",
+      "cases": 8,
+      "reserved": 16,
+      "http_attempts": 16,
+      "known_input_tokens": 106697,
+      "known_output_tokens": 1333,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-confirmation",
+      "cases": 3,
+      "reserved": 3,
+      "http_attempts": 3,
+      "known_input_tokens": 1046,
+      "known_output_tokens": 80,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-final-contract",
+      "cases": 32,
+      "reserved": 66,
+      "http_attempts": 66,
+      "known_input_tokens": 442475,
+      "known_output_tokens": 7070,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-sequence",
+      "cases": 4,
+      "reserved": 8,
+      "http_attempts": 8,
+      "known_input_tokens": 53237,
+      "known_output_tokens": 573,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-delivery",
+      "cases": 32,
+      "reserved": 66,
+      "http_attempts": 66,
+      "known_input_tokens": 441317,
+      "known_output_tokens": 6283,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-distractors",
+      "cases": 4,
+      "reserved": 5,
+      "http_attempts": 5,
+      "known_input_tokens": 37274,
+      "known_output_tokens": 403,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "cases": 8,
+      "reserved": 16,
+      "http_attempts": 16,
+      "known_input_tokens": 107639,
+      "known_output_tokens": 1321,
+      "unknown_attempts": 0
+    },
+    {
+      "run": "quality-sequence-delivery",
+      "cases": 4,
+      "reserved": 7,
+      "http_attempts": 7,
+      "known_input_tokens": 39561,
+      "known_output_tokens": 377,
+      "unknown_attempts": 1
+    },
+    {
+      "run": "quality-confirmation-guard",
+      "cases": 3,
+      "reserved": 2,
+      "http_attempts": 2,
+      "known_input_tokens": 687,
+      "known_output_tokens": 75,
+      "unknown_attempts": 0
+    }
+  ],
+  "final_natural_agent_cases": [
+    {
+      "run": "quality-delivery",
+      "id": "intuition",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "goal",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "background",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "rust",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "japanese",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "comparison",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "global",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "conditional",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "notation",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "selfreport",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "temporary",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "negation",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "hypothesis",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "quotation",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "background-not-request",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "rejected-suggestion",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "update-detail",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "update-language",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "update-goal",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "delete",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "refine",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "course-override",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "suggest-examples",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "suggest-stepwise",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "recall-date",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "recall-language",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "recall-goal",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "recall-correction",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "long-extract",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "long-split",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "explicit-quote",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-delivery",
+      "id": "quote-not-proof",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-default-scope",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-explicit-global",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-conditional-units",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-quote-deny",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-temp-vs-old",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-new-goal",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-exception",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-holdout-delivery",
+      "id": "holdout-numeric-recall",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-sequence-delivery",
+      "id": "new-sequence-three",
+      "state_pass": false,
+      "scope_pass": null,
+      "semantic_review": "unknown_connection_failure",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-sequence-delivery",
+      "id": "new-sequence-exception",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-sequence-delivery",
+      "id": "new-sequence-negation",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-sequence-delivery",
+      "id": "new-sequence-temporary",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-distractors",
+      "id": "noise-exam-date",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-distractors",
+      "id": "noise-numeric-stale-vector",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-distractors",
+      "id": "noise-language-background",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    },
+    {
+      "run": "quality-distractors",
+      "id": "noise-course-boundary",
+      "state_pass": true,
+      "scope_pass": true,
+      "semantic_review": "pass",
+      "note": "状态与范围断言之外另经Codex逐条核对正文/条件/数值；不是独立人工评审"
+    }
+  ],
+  "confirmation_review": {
+    "first_model_only": {
+      "pass": 2,
+      "total": 3,
+      "failure": "改换主题仍覆盖原目标"
+    },
+    "final_guard": {
+      "pass": 3,
+      "total": 3,
+      "real_calls": 2,
+      "note": "第三题由用户明确替换确认保护提前拒绝，不是模型分类器语义修复通过"
+    }
+  },
+  "money": "未计算；没有可靠价格与供应商账单",
+  "balance_insufficient": false,
+  "fixtures": {
+    "memory_text_confirmation_quality.json": "4d7db51ba760ed755b712f05ab1f4b549902fb9f5655ccf4f5a36b94eaf3914c",
+    "memory_text_distractor_quality.json": "722d05cf1ba84d750ce87ff7154a4b39a39ddbe6e0ced6668c3c61ff3d963f22",
+    "memory_text_holdout.json": "fd99ec8437200172b28b14b099d6d62bb682d1c844ac907a3e609ac30f198162",
+    "memory_text_quality.json": "f647fc38ffc1a4ad885bc180a2af09d15831d5235bcb194bafc4a4c3f80afccb",
+    "memory_text_sequence_quality.json": "e679734caa5c19665f12826e8f679210d3a1647bd8e24fbd36e60889df2b7285"
+  },
+  "post_quality_summary_rebuild": {
+    "file": "backend/app/memory/summary.py",
+    "changed_path": "dependencies construction; omit obsolete/disabled memory references from omitted assistant prose when rebuilding",
+    "sqlite_tests": 9,
+    "dedicated_pg_tests": 1,
+    "full_suite_rerun": false,
+    "real_summary_retested": false,
+    "real_agent_evaluation_summary_enabled": false
+  },
+  "cleanup": {
+    "containers": 3,
+    "anonymous_volumes": 3,
+    "disposable_databases": 6,
+    "temporary_directories": 25,
+    "temporary_files": 485,
+    "owned_pytest_links": 1266,
+    "retained_temporary_directories": 0
+  }
+}

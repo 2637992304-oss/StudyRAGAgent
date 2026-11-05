@@ -32,7 +32,8 @@
 .session-menu .text-button:last-child { color: #a64d3b; }
 .chat-page { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-width: 0; min-height: 0; }
 .conversation-header { display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 16px 30px; }
-.conversation-title { min-width: 0; }
+.conversation-title { min-width: 0; flex: 1; }
+.conversation-memory-button { flex: none; margin-left: auto; white-space: nowrap; }
 .conversation-title > span { display: block; color: #80918a; font-size: 11px; line-height: 1.5; }
 .conversation-title h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 3px 0 0; font-size: 17px; line-height: 1.5; font-weight: 600; color: #24433a; }
 .conversation-scroll { min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #c2d0c7 transparent; scrollbar-gutter: stable; }

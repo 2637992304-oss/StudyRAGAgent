@@ -7,7 +7,7 @@ export type User = { id: string; email: string }
 export type ChatSession = { id: string; course_id: string; document_ids: string[] | null; created_at: string; title?: string; title_renamed?: boolean }
 export type Citation = { kind?: 'course' | 'web' | 'github'; grant_id?: string; url?: string; accessed_at?: string; repository?: string; sha?: string; path?: string; line_start?: number; line_end?: number; truncated?: boolean; citation_id: string; label: number; chunk_id: string; document_id: string; filename: string; document_type: string; section_path: string | null; page_start: number | null; page_end: number | null; slide_no: number | null; snippet: string; file_url: string }
 export type Attachment = { id: string; filename: string; mime_type: string; size_bytes: number; width: number; height: number; message_id: string | null; saved_document_id: string | null; file_url: string }
-export type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string; status: string; error: string | null; created_at: string; citations: Citation[]; attachments?: Attachment[]; stop_reason?: string; thinking?: boolean | null; tool_policy?: { web_enabled: boolean; grant_ids: string[] } | null }
+export type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string; status: string; error: string | null; created_at: string; citations: Citation[]; attachments?: Attachment[]; stop_reason?: string; thinking?: boolean | null; tool_policy?: { web_enabled: boolean; grant_ids: string[] } | null; memory?: { operations: MemoryOperation[]; suggestions: MemorySuggestion[] } }
 export type ChatEvent = { event: string; data: Record<string, unknown> }
 export type ToolPolicy = { web_enabled: boolean; web_queries: string[]; repository_grant_ids: string[] }
 export type RepositoryGrant = { id: string; repository: string; ref: string; private: boolean; active: boolean }
@@ -25,7 +25,7 @@ export function setToken(value: string) {
   else localStorage.removeItem('studyrag-token')
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   if (token) headers.set('Authorization', `Bearer ${token}`)
   if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json')
@@ -47,6 +47,25 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
+
+export type MemoryPreference = { id: string; scope: string; key: string; value: string; version: number; source_kind: string }
+export type MemoryOperation = MemoryPreference & { schema_version?: number; items?: TextMemoryItem[]; before?: (TextMemoryItem | null)[]; operation_id: string; status: string; detail?: string | null }
+export type MemorySuggestion = { schema_version?: number; target?: TextMemoryItem | null; items?: TextMemoryItem[]; id: string; session_id: string; message_id: string; scope: string; key: string; value: string; version: number; preference_version: number; status: string }
+export type MemorySettings = { use: boolean; write: boolean; suggest: boolean; suppressed: string[]; version: number }
+export type MemoryPreferences = { enabled: boolean; items: MemoryPreference[]; effective: Record<string, string>; settings: MemorySettings; global_settings: MemorySettings; values: Record<string, string[]>; versions: Record<string, number> }
+export type SessionMemory = { available: boolean; enabled: boolean; version: number; summary: Record<string, { text: string; source_ids: string[] }[]> | null; covered: number; blocked_reason?: string | null; cutoff: string[] | null; updated_at: string | null; jobs: { id: string; status: string; attempts: number }[] }
+export const memoryPreferences = (courseId: string) => request<MemoryPreferences>(`/memory/preferences?course_id=${encodeURIComponent(courseId)}`)
+export const saveMemoryPreference = (body: Record<string, unknown>) => request<MemoryOperation>('/memory/preferences', { method: 'PUT', body: JSON.stringify({ ...body, request_key: crypto.randomUUID() }) })
+export const deleteMemoryPreference = (id: string, version: number) => request<MemoryOperation>(`/memory/preferences/${id}?version=${version}`, { method: 'DELETE' })
+export const memorySettings = (body: Record<string, unknown>) => request<MemorySettings>('/memory/settings', { method: 'PATCH', body: JSON.stringify(body) })
+export const undoMemory = (operation: MemoryOperation) => request<MemoryOperation>(`/memory/operations/${operation.operation_id}/undo`, { method: 'POST', body: JSON.stringify({ version: operation.version }) })
+export const acceptMemory = (card: MemorySuggestion, courseId: string | null, value: string, version: number) => request<MemoryOperation>(`/memory/suggestions/${card.id}/accept`, { method: 'POST', body: JSON.stringify({ version: card.version, course_id: courseId, value, preference_version: version, request_key: crypto.randomUUID() }) })
+export const dismissMemory = (card: MemorySuggestion, suppress: boolean) => request<MemorySuggestion>(`/memory/suggestions/${card.id}/dismiss`, { method: 'POST', body: JSON.stringify({ version: card.version, suppress }) })
+export const sessionMemory = (sid: string) => request<SessionMemory>(`/chat/sessions/${sid}/memory`)
+export const memorySuggestions = (sid: string) => request<MemorySuggestion[]>(`/chat/sessions/${sid}/memory/suggestions`)
+export const configureSessionMemory = (sid: string, version: number, enabled: boolean) => request<SessionMemory>(`/chat/sessions/${sid}/memory`, { method: 'PATCH', body: JSON.stringify({ version, enabled }) })
+export const clearSessionMemory = (sid: string, version: number) => request<SessionMemory>(`/chat/sessions/${sid}/memory?version=${version}`, { method: 'DELETE' })
+export const regenerateMemory = (sid: string) => request(`/chat/sessions/${sid}/memory/regenerate`, { method: 'POST' })
 
 export async function login(email: string, password: string): Promise<void> {
   const result = await request<{ access_token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
@@ -180,3 +199,14 @@ export async function documentImageBlob(documentId: string): Promise<string> {
   if (!response.ok) throw new Error('原图不可用或已移除')
   return URL.createObjectURL(await response.blob())
 }
+
+export type TextMemoryItem = { id?: string; content: string; course_id: string | null; scope_type?: string; version?: number; status?: string; effective_status?: string; use_mode: 'always' | 'relevant'; applies_when?: string | null; exceptions?: string | null; tags?: string[]; valid_from?: string | null; expires_at?: string | null }
+export const memoryCapabilities = () => request<{ engine: 'legacy' | 'text' | 'off'; max_content_chars: number }>('/memory/capabilities')
+export const textMemoryItems = (course: string, q = '', includeInactive = false) => request<{ items: TextMemoryItem[]; enabled: boolean; max_content_chars: number; suppressions: string[]; global_suppressions: string[]; has_more: boolean; settings: MemorySettings; global_settings: MemorySettings }>(`/memory/items?course_id=${encodeURIComponent(course)}&q=${encodeURIComponent(q)}&include_inactive=${includeInactive}`)
+export const saveTextMemory = (item: TextMemoryItem, requestKey: string) => request(`/memory/items${item.id ? '/' + item.id : ''}`, { method: item.id ? 'PUT' : 'POST', body: JSON.stringify({ ...Object.fromEntries(Object.entries(item).filter(([key]) => !['id','scope_type','status','write_basis','created_at','updated_at','effective_status'].includes(key))), version: item.version ?? 0, request_key: requestKey }) })
+export const deleteTextMemory = (item: TextMemoryItem) => request(`/memory/items/${item.id}`, { method: 'DELETE', body: JSON.stringify({ version: item.version, request_key: crypto.randomUUID() }) })
+export const undoTextMemory = (id: string) => request(`/memory/text-operations/${id}/undo`, { method: 'POST' })
+export const organizeTextMemory = (content: string, key: string) => request<{items: TextMemoryItem[]}>('/memory/organize', { method: 'POST', body: JSON.stringify({ content, request_key: key }) })
+export const saveTextMemoryBatch = (items: TextMemoryItem[], key: string) => request('/memory/items-batch', { method: 'POST', body: JSON.stringify({ version: 0, items, request_key: key }) })
+export const acceptTextSuggestion = (card: MemorySuggestion, items: TextMemoryItem[], key: string, confirmTargetReplacement = false) => request(`/memory/text-suggestions/${card.id}/accept`, { method: 'POST', body: JSON.stringify({ version: card.version, items, request_key: key, confirm_target_replacement: confirmTargetReplacement }) })
+export const dismissTextSuggestion = (card: MemorySuggestion, suppress: boolean) => request(`/memory/text-suggestions/${card.id}/dismiss?version=${card.version}&suppress=${suppress}`, { method: 'POST' })

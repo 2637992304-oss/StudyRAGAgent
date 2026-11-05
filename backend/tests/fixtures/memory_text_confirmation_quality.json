@@ -1,0 +1,10 @@
+{
+  "frozen_date": "2026-11-04",
+  "layer": "Synthetic scripted proposal + real semantic edited-candidate checker + ASGI, not natural Agent suggestion generation",
+  "adoption": "All three statuses and database states must match; preserve first failures; no independent human review",
+  "cases": [
+    {"id": "compatible-edit", "seed": "默认回答简短。", "candidate": "以后用生活例子讲解。", "edited": "解释概念时先讲直觉，再给定义。", "target": false, "expected_http": 200, "expected_items": 2},
+    {"id": "contradictory-edit", "seed": "默认回答简短。", "candidate": "以后用生活例子讲解。", "edited": "以后所有讲解都详细展开。", "target": false, "expected_http": 409, "expected_items": 1},
+    {"id": "changed-update-topic", "seed": "默认回答简短。", "candidate": "以后回答改为详细展开。", "edited": "本课程学习目标是通过期末考试。", "target": true, "expected_http": 409, "expected_items": 1}
+  ]
+}

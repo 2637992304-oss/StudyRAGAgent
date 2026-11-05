@@ -51,7 +51,7 @@ test('真实浏览器：开关、发送快照、刷新、账号隔离与停止',
   await response
   await expect(q).toBeEnabled({ timeout: 90_000 })
   await expect(page.locator('.chat-message.assistant').last()).toContainText('63')
-  await expect(page.locator('.chat-message.assistant').last()).toContainText('深度思考已开启')
+  await expect(page.locator('.chat-message.assistant').last().locator('.thinking-history')).toHaveCount(0)
   const selected = await selectedConversation(page)
   await page.reload()
   await page.getByRole('button', { name: '思考模式增补隔离验收', exact: true }).click()
@@ -62,7 +62,7 @@ test('真实浏览器：开关、发送快照、刷新、账号隔离与停止',
   await page.getByRole('button', { name: '发送', exact: true }).click()
   await expect(q).toBeEnabled({ timeout: 90_000 })
   await expect(page.locator('.chat-message.assistant').last()).toContainText('55')
-  await expect(page.locator('.chat-message.assistant').last()).toContainText('深度思考已关闭')
+  await expect(page.locator('.chat-message.assistant').last().locator('.thinking-history')).toHaveCount(0)
   // Leave account1 ON; account2 must still start OFF in the same localStorage.
   await toggle.click()
   await page.screenshot({ path: resolve(evidence, 'history.png'), fullPage: true })
@@ -120,7 +120,7 @@ test('真实浏览器：刷新后的工具追问、旧消息和图文上下文',
   await expect(toggle).toBeDisabled()
   await expect(q).toBeEnabled({ timeout: 90_000 })
   await expect(answer).toContainText('7')
-  await expect(answer).toContainText('深度思考已开启')
+  await expect(answer.locator('.thinking-history')).toHaveCount(0)
   const sid = await selectedConversation(page)
   await page.reload()
   await page.getByRole('button', { name: '思考模式增补隔离验收', exact: true }).click()

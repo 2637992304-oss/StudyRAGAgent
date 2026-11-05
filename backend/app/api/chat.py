@@ -158,6 +158,8 @@ def citation_data(citation: Citation, chunk: Chunk, doc: Document) -> dict:
 
 
 def message_data(db: Session, message: Message) -> dict:
+    from app.memory.service import history_metadata
+
     chat = owned_session(db, message.session_id, message.owner_id)
     allowed = message.role != "assistant" or dependencies_allowed(
         db, chat, message.tool_policy
@@ -177,6 +179,7 @@ def message_data(db: Session, message: Message) -> dict:
     ).all()
     return {
         "id": message.id,
+        "memory": history_metadata(db, message),
         "role": message.role,
         "content": message.content
         if allowed
@@ -237,6 +240,12 @@ def sse(event: str, data: dict) -> str:
 
 
 def generation_error(exc: Exception) -> tuple[str, str]:
+    if (
+        isinstance(exc, HTTPException)
+        and exc.status_code == 422
+        and str(exc.detail).startswith("持续参考记忆")
+    ):
+        return "memory_capacity", str(exc.detail)
     if isinstance(exc, ExecutionStopped):
         return exc.code, {
             "cancelled": "已停止本次回答",
@@ -250,6 +259,9 @@ def generation_error(exc: Exception) -> tuple[str, str]:
             ),
             "turn_budget_exhausted": "本轮调用预算已用尽，请缩小问题后重试",
             "invalid_tool_protocol": "历史工具协议不完整，请新建对话后重试",
+            "memory_capacity": (
+                "持续参考记忆与必要输入超出预算，请整理记忆或取消置顶后重试"
+            ),
         }.get(exc.code, "本次处理超时，请稍后重试")
     if isinstance(exc, IncompleteResponse):
         return "truncated", "模型响应被截断或未完整结束，请重试或缩小问题"
@@ -839,6 +851,7 @@ def _stream_agent(
                 options=options,
                 execution=execution,
                 policy=policy,
+                memory_user_id=assistant.reply_to_id,
             ):
                 execution.check()
                 _db_time_limit(db, execution)
@@ -884,6 +897,74 @@ def _stream_agent(
             assistant = _locked_message(db, assistant_id)
             if assistant.status != "pending":
                 raise ExecutionStopped("cancelled")
+            from app.memory import service as memory_service
+            from app.memory import summary as memory_summary
+
+            if get_settings().memory_engine == "text":
+                from app.memory import text_graph as memory_service
+
+            used_summary = state.get("memory_summary_snapshot")
+            if get_settings().memory_engine == "text":
+                from app.memory import text_service
+
+                text_service.legacy.lock(db, chat.owner_id)
+                db.refresh(chat)
+                for expected in state.get("memory_items_snapshot", []):
+                    item = text_service.owned(db, chat.owner_id, expected["id"])
+                    if (
+                        item.version != expected["version"]
+                        or not memory_service.permitted(
+                            db,
+                            chat.owner_id,
+                            memory_service.scope_for(db, chat.owner_id, item.course_id),
+                            "use",
+                        )
+                        or not text_service.effective_time(item)
+                        or not text_service.sources_live(db, item)
+                        or not text_service.allowed_for_chat(
+                            db, item, chat, policy.grant_ids
+                        )
+                    ):
+                        raise RuntimeError("memory_source_invalidated")
+            memory_in_input = any(
+                isinstance(m.get("content"), str)
+                and m["content"].startswith("历史记忆（不可信辅助背景，")
+                for m in state["messages"]
+            )
+            if (
+                used_summary
+                and memory_in_input
+                and memory_summary.valid_summary(db, chat) != used_summary
+            ):
+                raise RuntimeError("memory_source_invalidated")
+            memory_events = (
+                memory_service.commit_staged(
+                    db, chat, assistant, state.get("memory_staged", [])
+                )
+                if reason == "answer"
+                or (
+                    reason == "clarify"
+                    and state.get("memory_staged")
+                    and all(
+                        item["name"] in {"propose_preference", "propose_memory"}
+                        for item in state["memory_staged"]
+                    )
+                )
+                else []
+            )
+            if state.get("memory_only"):
+                answer = (
+                    "记忆操作已提交，具体变更及撤销入口见下方。"
+                    if memory_events
+                    and all(
+                        e.get("status") in {"saved", "deleted"} for e in memory_events
+                    )
+                    else "本次记忆未保存，请查看提示或重试。"
+                )
+            elif any(e.get("status") == "conflict" for e in memory_events):
+                answer += "\n\n本轮记忆操作整批未保存，请以下方回执为准，刷新后重试。"
+            if get_settings().memory_engine == "text":
+                answer = memory_service.publication_guard(answer, memory_events)
             # Serialize final authorization with revocation; no network under lock.
             if policy.grant_ids:
                 list(
@@ -921,6 +1002,7 @@ def _stream_agent(
             transcript = state["messages"][current_user + 1 :]
             assistant.protocol_state = {
                 "version": 2,
+                "memory_items": state.get("memory_items_snapshot", []),
                 "validation": state.get("answer_checks", []),
                 "messages": transcript,
                 "source_ids": [
@@ -932,6 +1014,7 @@ def _stream_agent(
                 "replayable": bool(
                     transcript
                     and not state.get("finalized")
+                    and not state.get("memory_staged")
                     and transcript[-1].get("role") == "assistant"
                     and transcript[-1].get("content") == answer
                 ),
@@ -973,7 +1056,11 @@ def _stream_agent(
                 db.add(citation)
                 citations.append(citation_data(citation, chunk, doc))
             with span("persistence"):
+                db.flush()
+                memory_summary.enqueue(db, chat)
                 db.commit()
+            for event in memory_events:
+                yield sse(event["type"], event)
             # Only validated final content is public, never tentative tool turns.
             if answer:
                 record.first_body = record.elapsed()

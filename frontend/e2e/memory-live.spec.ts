@@ -1,0 +1,41 @@
+import { expect, test } from '@playwright/test'
+
+test.skip(!process.env.STAGE7_LIVE, 'requires identified isolated API and frontend')
+
+test('聊天保存、回执刷新、撤销、推断卡片和轻量管理', async ({ page, request }) => {
+  const api = process.env.STAGE7_API_URL!
+  const identity = await request.get(`${api}/api/v1/_stage7_identity`)
+  expect((await identity.json()).id).toBe(process.env.STAGE7_VALIDATION_RUN)
+  const register = await request.post(`${api}/api/v1/auth/register`, { data: { email: `memory-${crypto.randomUUID()}@example.test`, password: 'stage7-disposable-password' } })
+  expect(register.ok()).toBeTruthy()
+  const { access_token: token } = await register.json()
+  const headers = { Authorization: `Bearer ${token}` }
+  const course = await (await request.post(`${api}/api/v1/courses`, { headers, data: { name: '阶段7验证课程' } })).json()
+  await request.post(`${api}/api/v1/chat/sessions`, { headers, data: { course_id: course.id } })
+  await page.addInitScript(token => localStorage.setItem('studyrag-token', token), token)
+  await page.goto('/')
+  await expect(page.getByLabel('输入问题')).toBeEnabled()
+  const send = async (text: string) => { await page.getByLabel('输入问题').fill(text); await page.getByLabel('输入问题').press('Enter'); await expect(page.getByLabel('输入问题')).toBeEnabled() }
+  await send('以后这门课都用Python举例')
+  await expect(page.locator('.memory-receipt').getByText(/已记住/)).toBeVisible()
+  await page.reload()
+  await expect(page.locator('.memory-receipt').getByText(/已记住/)).toBeVisible()
+  await page.locator('.memory-receipt').getByRole('button', { name: '撤销', exact: true }).click()
+  await expect(page.locator('.memory-receipt').getByText(/操作已撤销/)).toBeVisible()
+  for (let i = 0; i < 3; i++) await send('用Python举例')
+  const card = page.getByLabel('记忆建议')
+  await expect(card).toBeVisible()
+  const preferences = await (await request.get(`${api}/api/v1/memory/preferences?course_id=${course.id}`, { headers })).json()
+  expect(preferences.effective).toEqual({})
+  await card.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(card).toHaveCount(0)
+  await page.getByRole('button', { name: '记忆管理', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText(/当前有效偏好：代码语言：Python/)).toBeVisible()
+  await dialog.getByRole('button', { name: '删除', exact: true }).click()
+  await expect(dialog.getByText('当前有效偏好：无', { exact: true })).toBeVisible()
+  await dialog.getByRole('button', { name: '关闭记忆管理', exact: true }).click()
+  await page.reload()
+  await expect(page.getByLabel('记忆建议')).toHaveCount(0)
+})
