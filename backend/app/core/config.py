@@ -67,6 +67,19 @@ class Settings(BaseSettings):
     agent_review_reserve_seconds: float = Field(default=90, gt=0)
     agent_history_messages: int = Field(default=12, ge=2, le=30)
     agent_history_chars: int = Field(default=18000, ge=2000, le=50000)
+    memory_preferences_enabled: bool = False
+    memory_content_max_chars: int = Field(default=1000, ge=1, le=10000)
+    memory_engine: Literal["legacy", "text", "off"] = "legacy"
+    memory_text_context_chars: int = Field(default=6000, ge=1000, le=20000)
+    memory_suggestions_enabled: bool = False
+    memory_summary_enabled: bool = False
+    memory_summary_batch: int = Field(default=12, ge=2, le=30)
+    memory_summary_chars: int = Field(default=12000, ge=1000, le=24000)
+    memory_summary_output_chars: int = Field(default=3000, ge=300, le=6000)
+    memory_summary_timeout: float = Field(default=30, ge=1, le=90)
+    # Backward-compatible name: validation partition size, not a coverage cap.
+    memory_summary_dependencies: int = Field(default=300, ge=30, le=1000)
+    memory_queue_limit: int = Field(default=100, ge=1, le=1000)
     web_search_provider: Literal["tavily"] = "tavily"
     tavily_api_key: str = ""
     external_timeout: float = Field(default=20, gt=0, le=60)

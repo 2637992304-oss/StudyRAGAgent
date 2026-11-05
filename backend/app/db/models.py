@@ -4,6 +4,7 @@ from uuid import uuid4
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -263,3 +264,219 @@ class ExternalSource(Base):
     # Snapshots contain no credentials; retained privately even when not cited.
     kind: Mapped[str] = mapped_column(String(16))
     data: Mapped[dict] = mapped_column(JSON)
+
+
+class MemoryState(Base):
+    __tablename__ = "memory_states"
+    __table_args__ = (UniqueConstraint("owner_id", "scope"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    scope: Mapped[str] = mapped_column(String(80))
+    version: Mapped[int] = mapped_column(default=0)
+    epoch: Mapped[int] = mapped_column(default=0)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class MemoryPreference(Base):
+    __tablename__ = "memory_preferences"
+    __table_args__ = (UniqueConstraint("owner_id", "scope", "key"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    scope: Mapped[str] = mapped_column(String(80))
+    key: Mapped[str] = mapped_column(String(40))
+    value: Mapped[str] = mapped_column(String(80))
+    version: Mapped[int] = mapped_column(default=1)
+    deleted: Mapped[bool] = mapped_column(default=False)
+    source_kind: Mapped[str] = mapped_column(String(32))
+    sources: Mapped[list] = mapped_column(JSON, default=list)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class MemorySuggestion(Base):
+    __tablename__ = "memory_suggestions"
+    __table_args__ = (UniqueConstraint("owner_id", "dedup_key"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("chat_sessions.id", ondelete="CASCADE"), index=True
+    )
+    message_id: Mapped[str] = mapped_column(
+        ForeignKey("messages.id", ondelete="CASCADE")
+    )
+    dedup_key: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(24), default="pending")
+    version: Mapped[int] = mapped_column(default=1)
+    data: Mapped[dict] = mapped_column(JSON)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class MemoryOperation(Base):
+    __tablename__ = "memory_operations"
+    __table_args__ = (UniqueConstraint("owner_id", "request_key"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    session_id: Mapped[str | None] = mapped_column(
+        ForeignKey("chat_sessions.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    message_id: Mapped[str | None] = mapped_column(
+        ForeignKey("messages.id", ondelete="CASCADE"), nullable=True
+    )
+    request_key: Mapped[str] = mapped_column(String(160))
+    status: Mapped[str] = mapped_column(String(24), default="saved")
+    data: Mapped[dict] = mapped_column(JSON)
+
+
+class MemoryJob(Base):
+    __tablename__ = "memory_jobs"
+    __table_args__ = (UniqueConstraint("session_id", "work_key"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("chat_sessions.id", ondelete="CASCADE"), index=True
+    )
+    work_key: Mapped[str] = mapped_column(String(100))
+    status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
+    token: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    lease_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    attempts: Mapped[int] = mapped_column(default=0)
+    data: Mapped[dict] = mapped_column(JSON)
+    measurements: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class MemoryDependency(Base):
+    """Append-only provenance for the current summary generation, outside prompts."""
+
+    __tablename__ = "memory_dependencies"
+    __table_args__ = (UniqueConstraint("state_id", "kind", "source_id"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    state_id: Mapped[str] = mapped_column(
+        ForeignKey("memory_states.id", ondelete="CASCADE"), index=True
+    )
+    kind: Mapped[str] = mapped_column(String(24))
+    source_id: Mapped[str] = mapped_column(String(36), index=True)
+    digest: Mapped[str] = mapped_column(String(64))
+
+
+class MemoryItem(Base):
+    __tablename__ = "memory_items"
+    __table_args__ = (
+        CheckConstraint("version >= 1", name="ck_memory_item_version"),
+        CheckConstraint(
+            "status IN ('active','superseded','deleted','invalidated')",
+            name="ck_memory_item_status",
+        ),
+        CheckConstraint(
+            "use_mode IN ('always','relevant')", name="ck_memory_item_use_mode"
+        ),
+        CheckConstraint(
+            "write_basis IN ('manual','explicit_request','user_confirmed')",
+            name="ck_memory_item_basis",
+        ),
+        CheckConstraint(
+            "(scope_type='global' AND course_id IS NULL) OR "
+            "(scope_type='course' AND course_id IS NOT NULL)",
+            name="ck_memory_item_scope",
+        ),
+        CheckConstraint(
+            "valid_from IS NULL OR expires_at IS NULL OR valid_from < expires_at",
+            name="ck_memory_item_dates",
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    course_id: Mapped[str | None] = mapped_column(
+        ForeignKey("courses.id", ondelete="CASCADE"), index=True
+    )
+    scope_type: Mapped[str] = mapped_column(String(16))
+    content: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(24), default="active", index=True)
+    version: Mapped[int] = mapped_column(default=1)
+    write_basis: Mapped[str] = mapped_column(String(24))
+    applies_when: Mapped[str | None] = mapped_column(Text)
+    exceptions: Mapped[str | None] = mapped_column(Text)
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    use_mode: Mapped[str] = mapped_column(String(16), default="relevant")
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class MemoryItemRevision(Base):
+    __tablename__ = "memory_item_revisions"
+    __table_args__ = (UniqueConstraint("item_id", "version"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("memory_items.id", ondelete="CASCADE"), index=True
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    data: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class MemoryItemSource(Base):
+    __tablename__ = "memory_item_sources"
+    __table_args__ = (UniqueConstraint("revision_id", "kind", "source_id"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    revision_id: Mapped[str] = mapped_column(
+        ForeignKey("memory_item_revisions.id", ondelete="CASCADE"), index=True
+    )
+    kind: Mapped[str] = mapped_column(String(24))
+    source_id: Mapped[str] = mapped_column(String(36), index=True)
+    digest: Mapped[str] = mapped_column(String(64))
+
+
+class MemoryItemRelation(Base):
+    __tablename__ = "memory_item_relations"
+    __table_args__ = (UniqueConstraint("item_id", "target_id", "kind"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("memory_items.id", ondelete="CASCADE"), index=True
+    )
+    target_id: Mapped[str] = mapped_column(
+        ForeignKey("memory_items.id", ondelete="CASCADE")
+    )
+    kind: Mapped[str] = mapped_column(String(24))
+
+
+class MemoryItemEmbedding(Base):
+    __tablename__ = "memory_item_embeddings"
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("memory_items.id", ondelete="CASCADE"), primary_key=True
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    model: Mapped[str] = mapped_column(String(200))
+    embedding: Mapped[list[float]] = mapped_column(Vector(512))
+
+
+class MemoryIndexJob(Base):
+    __tablename__ = "memory_index_jobs"
+    __table_args__ = (UniqueConstraint("item_id", "version"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("memory_items.id", ondelete="CASCADE"), index=True
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
+    token: Mapped[str | None] = mapped_column(String(36))
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    attempts: Mapped[int] = mapped_column(default=0)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)

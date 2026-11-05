@@ -1,5 +1,11 @@
 # 项目文档
 
+- [自由文本长期记忆扩展进度（实施中，尚未启用）](stage7/free-text-progress.md)
+
+- [阶段 7 对话式偏好与会话摘要（配置、试点与验收）](stage7/README.md)
+- [阶段 7 自由文本记忆：当前契约与迁移](stage7/free-text-design.md)
+- [阶段 7 自由文本记忆：工程、真实质量与采用记录](stage7/free-text-report.md)
+
 - [本地部署、配置、备份与测试入口](../README.md)
 - [阶段 6 实施与验收](stage6/report.md)
 - [阶段 6 进度](stage6/progress.md)

@@ -1,0 +1,14 @@
+.memory-card,.memory-receipt{margin-top:12px;padding:12px;border:1px solid var(--border-color,#8886);border-radius:10px;font-size:.9rem}.memory-actions,.memory-receipt{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.memory-receipt span{flex:1}.memory-panel{max-width:620px}.memory-panel fieldset{margin:14px 0;padding:12px;border:1px solid #8886;border-radius:8px}.memory-panel label{display:block;margin:8px 0}.memory-panel select{margin-left:8px}.memory-panel li{margin:10px 0}.memory-panel button,.memory-card button{margin:4px}
+.memory-dialog { --memory-scroll-thumb: #71917e70; scrollbar-width: thin; scrollbar-color: var(--memory-scroll-thumb) transparent; }
+:root[data-theme='dark'] .memory-dialog { --memory-scroll-thumb: #a0b6a680; }
+@supports selector(::-webkit-scrollbar) {
+  .memory-dialog { scrollbar-width: auto; scrollbar-color: auto; }
+  .memory-dialog::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
+  .memory-dialog::-webkit-scrollbar-track { margin-block: 14px; background: transparent; }
+  .memory-dialog::-webkit-scrollbar-thumb { min-height: 32px; border-radius: 999px; background: var(--memory-scroll-thumb); }
+  .memory-dialog::-webkit-scrollbar-thumb:hover { background: #71917eb0; }
+  .memory-dialog::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+  .memory-dialog::-webkit-scrollbar-corner { background: transparent; }
+}
+
+.memory-panel textarea,.memory-card textarea{display:block;box-sizing:border-box;width:100%;min-height:96px;max-height:320px;resize:vertical}.memory-panel pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}.memory-panel li p,.memory-receipt span{overflow-wrap:anywhere}

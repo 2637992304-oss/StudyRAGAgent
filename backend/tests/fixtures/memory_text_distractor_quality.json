@@ -1,0 +1,129 @@
+{
+  "schema_version": 4,
+  "frozen_date": "2026-11-04",
+  "assessment": "调用前冻结的干扰召回保留题；额外观察实际HTTP尝试的记忆输入子集，完整模型协议不输出；语义逐条审阅。",
+  "adoption": {
+    "hard_failures": "越权、未确认写入、明确不保存却写入、取消后写入任一出现则不采用",
+    "explicit_and_update": "所有关键更新方向回归必须正确；其他明确保存至少90%满足语义要求",
+    "suggestions": "两组都形成待确认建议且确认前无有效偏好",
+    "recall": "四组均保留关键事实，无相反结论",
+    "split": "先候选、确认前无有效写入，条件不丢失",
+    "scope": "仅有限试点，不默认推广"
+  },
+  "cases": [
+    {
+      "id": "noise-exam-date",
+      "seed": "用户自述：本课程数据库考试在2026年12月18日。",
+      "prompt": "我的数据库考试安排在哪一天？",
+      "words": [
+        "2026",
+        "12",
+        "18"
+      ],
+      "distractors": [
+        {
+          "content": "第1次作业提交日期是2026年11月2日，不是数据库考试日期。"
+        },
+        {
+          "content": "第2次作业提交日期是2026年11月3日，不是数据库考试日期。"
+        },
+        {
+          "content": "第3次作业提交日期是2026年11月4日，不是数据库考试日期。"
+        },
+        {
+          "content": "第4次作业提交日期是2026年11月5日，不是数据库考试日期。"
+        },
+        {
+          "content": "第5次作业提交日期是2026年11月6日，不是数据库考试日期。"
+        },
+        {
+          "content": "第6次作业提交日期是2026年11月7日，不是数据库考试日期。"
+        },
+        {
+          "content": "第7次作业提交日期是2026年11月8日，不是数据库考试日期。"
+        },
+        {
+          "content": "第8次作业提交日期是2026年11月9日，不是数据库考试日期。"
+        },
+        {
+          "content": "第9次作业提交日期是2026年11月10日，不是数据库考试日期。"
+        },
+        {
+          "content": "第10次作业提交日期是2026年11月11日，不是数据库考试日期。"
+        },
+        {
+          "content": "第11次作业提交日期是2026年11月12日，不是数据库考试日期。"
+        },
+        {
+          "content": "第12次作业提交日期是2026年11月13日，不是数据库考试日期。"
+        }
+      ],
+      "kind": "recall",
+      "steps": null,
+      "expected_scope": "course"
+    },
+    {
+      "id": "noise-numeric-stale-vector",
+      "seed": "实验最终耗时7秒，不是70秒。",
+      "stale_index_content": "早期记录：实验耗时70秒。",
+      "prompt": "我的实验最终耗时多少秒？不要采用早期试跑数据。",
+      "words": [
+        "7"
+      ],
+      "distractors": [
+        {
+          "content": "他人的实验示例耗时700秒，不是我的最终实验数据。"
+        },
+        {
+          "content": "试跑曾经耗时70秒，这不是最终结果。"
+        }
+      ],
+      "kind": "recall",
+      "steps": null,
+      "expected_scope": "course"
+    },
+    {
+      "id": "noise-language-background",
+      "seed": "用户自述：熟悉Python，但没有学过Java。",
+      "prompt": "我已经学过Java了吗？请区分我的基础和课程教材使用的语言。",
+      "words": [
+        "没有",
+        "Java"
+      ],
+      "distractors": [
+        {
+          "content": "本课程教材的代码示例使用Java。"
+        },
+        {
+          "content": "用户的朋友熟悉Java。"
+        },
+        {
+          "content": "老师已经学习过Java。"
+        }
+      ],
+      "kind": "recall",
+      "steps": null,
+      "expected_scope": "course"
+    },
+    {
+      "id": "noise-course-boundary",
+      "seed": "用户自述：本课程实验最终运行13秒。",
+      "prompt": "本课程实验最终运行了多久？",
+      "words": [
+        "13"
+      ],
+      "distractors": [
+        {
+          "content": "本课程作业阅读花了30分钟。"
+        },
+        {
+          "content": "另一门课的实验最终运行999秒。",
+          "scope": "other"
+        }
+      ],
+      "kind": "recall",
+      "steps": null,
+      "expected_scope": "course"
+    }
+  ]
+}

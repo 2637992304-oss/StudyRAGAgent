@@ -192,7 +192,31 @@ def prepare_messages(messages, tools, output_tokens, settings, *, purpose):
             <= settings.context_request_tokens
         ):
             return Prepared(prepared, size, duplicate_count, removed)
-        user_positions = [i for i, m in enumerate(original) if m.get("role") == "user"]
+        optional_memory = [
+            i
+            for i, m in enumerate(original)
+            if m.get("role") == "user"
+            and isinstance(m.get("content"), str)
+            and m["content"].startswith("历史记忆（不可信辅助背景，")
+            and not m["content"].startswith(
+                "历史记忆（不可信辅助背景，持续要求必须保留；"
+            )
+        ]
+        if optional_memory and purpose in {"agent", "finalize"}:
+            original.pop(optional_memory[0])
+            removed += 1
+            continue
+        user_positions = [
+            i
+            for i, m in enumerate(original)
+            if m.get("role") == "user"
+            and not (
+                isinstance(m.get("content"), str)
+                and m["content"].startswith(
+                    "历史记忆（不可信辅助背景，持续要求必须保留；"
+                )
+            )
+        ]
         # Reviews/repair contain current question/images and structured proof DATA;
         # never mistake those separate user messages for disposable old history.
         if purpose in {"agent", "finalize"} and len(user_positions) > 1:
@@ -204,7 +228,18 @@ def prepare_messages(messages, tools, output_tokens, settings, *, purpose):
             ]
             removed += 1
             continue
-        raise ContextLimit("image_budget_unknown" if unknown else "context_limit")
+        required_memory = any(
+            isinstance(m.get("content"), str)
+            and m["content"].startswith("历史记忆（不可信辅助背景，持续要求必须保留；")
+            for m in original
+        )
+        raise ContextLimit(
+            "image_budget_unknown"
+            if unknown
+            else "memory_capacity"
+            if required_memory
+            else "context_limit"
+        )
 
 
 class BudgetLedger:

@@ -176,7 +176,11 @@ class OpenAICompatibleLLM:
                         json=payload,
                     ) as response:
                         response_started = time.monotonic()
-                        if response.status_code == 503 and attempt == 0:
+                        if (
+                            response.status_code == 503
+                            and attempt == 0
+                            and not (options and options.purpose == "memory_summary")
+                        ):
                             if execution:
                                 execution.cancelled.wait(min(2, execution.remaining()))
                                 execution.check()

@@ -1,3 +1,4 @@
+import { MemoryCards, MemoryPanel } from './Memory'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -117,6 +118,7 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
   const [loading, setLoading] = useState(Boolean(sessionId))
   const [showBottom, setShowBottom] = useState(false)
   const [scopeOpen, setScopeOpen] = useState(false)
+  const [memoryOpen, setMemoryOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const followRef = useRef(true)
   const loadedSession = useRef('')
@@ -271,16 +273,17 @@ export function Chat({ accountId, courseId, courseName, session, loadingSession,
   }
   const inputDisabled = busy || loading || loadingSession || historyLoading
   return <section className="chat-page" aria-label="课程对话">
+    {memoryOpen && <MemoryPanel key={`${accountId}:${sessionId}`} courseId={courseId} sessionId={sessionId} onClose={() => setMemoryOpen(false)} onChanged={() => refreshLatest(sessionId)} />}
     <header className="conversation-header">
       <button type="button" className="icon-button mobile-nav-button" aria-label="打开课程导航" onClick={onOpenSidebar}><Icon name="menu" size={21} /></button>
-      <div className="conversation-title"><span>{courseName}</span><h1>{session?.title || '新对话'}</h1></div>
+      <div className="conversation-title"><span>{courseName}</span><h1>{session?.title || '新对话'}</h1></div><button className="conversation-memory-button" type="button" disabled={busy} onClick={() => setMemoryOpen(true)}>记忆管理</button>
     </header>
     <div className="conversation-scroll" ref={scrollRef} onScroll={event => {
       const area = event.currentTarget
       followRef.current = area.scrollHeight - area.scrollTop - area.clientHeight < 64
       setShowBottom(!followRef.current)
     }}>
-    <div className="chat-history" aria-live="polite">{historyCursor && <button type="button" disabled={historyLoading || busy} onClick={() => void loadEarlier()}>{historyLoading ? '正在加载…' : '加载更早消息'}</button>}{messages.length === 0 && <div className="conversation-empty"><h2>{loading || loadingSession ? '正在加载对话…' : '有什么想一起弄明白的？'}</h2><p>输入问题，或附上题目图片。</p></div>}{messages.map(item => <article key={item.id} className={`chat-message ${item.role}`}><strong>{item.role === 'user' ? '你' : '学习助手'}</strong><small className="thinking-history">{thinkingLabel(item.thinking)}</small>{item.role === 'assistant' ? <Answer message={item} /> : <p>{item.content}</p>}<div className="attachments">{item.attachments?.map(a => <Picture key={a.id} item={a} removable={!busy} onRemove={() => removeImage(a)} onSaved={onSaved} onError={setError} />)}</div>{item.status === 'pending' && <small>{progress || '正在生成…'}</small>}{item.status === 'failed' && <small className="job-error">{item.error ?? '回答失败，请重试'}</small>}{item.citations.length > 0 && <details className="source-disclosure"><summary>查看来源（{item.citations.length}）</summary><div className="sources">{item.citations.map(citation => <Source key={citation.citation_id} item={citation} onError={setError} onRevoke={revokeHistory} />)}</div></details>}</article>)}</div>
+    <div className="chat-history" aria-live="polite">{historyCursor && <button type="button" disabled={historyLoading || busy} onClick={() => void loadEarlier()}>{historyLoading ? '正在加载…' : '加载更早消息'}</button>}{messages.length === 0 && <div className="conversation-empty"><h2>{loading || loadingSession ? '正在加载对话…' : '有什么想一起弄明白的？'}</h2><p>输入问题，或附上题目图片。</p></div>}{messages.map(item => <article key={item.id} className={`chat-message ${item.role}`}>{item.role === 'user' && <><strong>你</strong><small className="thinking-history">{thinkingLabel(item.thinking)}</small></>}{item.role === 'assistant' ? <Answer message={item} /> : <p>{item.content}</p>}<MemoryCards message={item} courseId={courseId} disabled={busy} onChanged={() => refreshLatest(sessionId)} onManage={() => setMemoryOpen(true)} /><div className="attachments">{item.attachments?.map(a => <Picture key={a.id} item={a} removable={!busy} onRemove={() => removeImage(a)} onSaved={onSaved} onError={setError} />)}</div>{item.status === 'pending' && <small>{progress || '正在生成…'}</small>}{item.status === 'failed' && <small className="job-error">{item.error ?? '回答失败，请重试'}</small>}{item.citations.length > 0 && <details className="source-disclosure"><summary>查看来源（{item.citations.length}）</summary><div className="sources">{item.citations.map(citation => <Source key={citation.citation_id} item={citation} onError={setError} onRevoke={revokeHistory} />)}</div></details>}</article>)}</div>
     </div>
     <div className="composer-dock">
       {showBottom && <button type="button" className="icon-button jump-bottom" aria-label="回到最新消息" title="回到最新消息" onClick={() => { followRef.current = true; scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); setShowBottom(false) }}><Icon name="down" /></button>}

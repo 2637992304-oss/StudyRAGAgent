@@ -34,6 +34,13 @@ celery_app = Celery("studyrag", broker=get_settings().redis_url)
 celery_app.conf.update(task_ignore_result=True)
 
 
+@celery_app.task
+def memory_index_task(ident):
+    from app.memory.text_index import execute
+
+    execute(ident)
+
+
 @after_setup_logger.connect
 @after_setup_task_logger.connect
 def format_worker_logs(logger=None, **kwargs):
@@ -172,6 +179,13 @@ def _ingest_owned(job_id, token):
 @celery_app.task(name="studyrag.ingest")
 def ingest_task(job_id: str) -> None:
     ingest_document(job_id)
+
+
+@celery_app.task(name="studyrag.memory_summary")
+def memory_summary_task(job_id: str) -> None:
+    from app.memory.summary import run_job
+
+    run_job(job_id)
 
 
 _RECOVERY_STOP = threading.Event()

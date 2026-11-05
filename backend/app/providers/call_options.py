@@ -23,7 +23,17 @@ class IncompleteResponse(RuntimeError):
 
 @dataclass(frozen=True)
 class CallOptions:
-    purpose: Literal["agent", "transcription", "citation_check", "finalize"]
+    purpose: Literal[
+        "agent",
+        "transcription",
+        "citation_check",
+        "finalize",
+        "memory_summary",
+        "memory_suggestion",
+        "memory_organize",
+        "memory_action",
+        "memory_conflict",
+    ]
     thinking: bool
     max_tokens: int
     timeout: float
@@ -36,6 +46,22 @@ class CallOptions:
 
 def profile(purpose: str, thinking: bool = False) -> CallOptions:
     s = get_settings()
+    if purpose == "memory_action":
+        return CallOptions("memory_action", False, 800, s.agent_plain_timeout)
+    if purpose == "memory_conflict":
+        return CallOptions(
+            "memory_conflict", False, 1200, s.agent_plain_timeout, allow_tools=False
+        )
+    if purpose == "memory_organize":
+        return CallOptions(
+            "memory_organize", False, 1800, s.agent_plain_timeout, allow_tools=False
+        )
+    if purpose == "memory_suggestion":
+        return CallOptions("memory_suggestion", False, 800, s.agent_plain_timeout)
+    if purpose == "memory_summary":
+        return CallOptions(
+            "memory_summary", False, 1800, s.memory_summary_timeout, allow_tools=False
+        )
     if purpose == "agent":
         return CallOptions(
             "agent",
