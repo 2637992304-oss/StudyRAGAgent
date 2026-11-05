@@ -45,7 +45,9 @@
 - 不新增迁移；复用阶段3的`0009_message_measurements` JSON。尚未部署阶段3的环境仍需按原备份、停旧API/Worker、迁移至head、启动流程更新；本轮未对业务库执行。
 - 关闭`CONTEXT_BUDGET_ENABLED`和`AGENT_FINALIZE_ENABLED`即可回退策略，不改资料或索引。开关独立；本轮组合验证使用两者开启，实际采用仍见下表。
 
-配置与估计单位见根README和`.env.example`。UTF-8字节加余量不等于供应商精确Token；图片估计、隐式供应商开销和容量仍需管理员按模型配置验证，不能声称已经严格证明所有请求均不超供应商上限。
+默认单请求估计上限为 65536，协议余量为 1024。每轮估计预留上限为 1048576，调用尝试上限为 16。图片估计由 `CONTEXT_IMAGE_TOKENS` 显式配置。核验预留取配置值（默认 90 秒）与两次核验超时加最多 25 秒修复中的较大者。配置见 [环境变量示例](../.env.example)。
+
+UTF-8字节加余量不等于供应商精确Token；图片估计、隐式供应商开销和容量仍需管理员按模型配置验证，不能声称已经严格证明所有请求均不超供应商上限。
 
 ## 工程验收（2026-10-30）
 
@@ -112,8 +114,17 @@
 
 ## 复现与清理
 
-从`backend/`执行`python -m scripts.validate_optimization56`，可重复独立工程验收；需要Docker和已有兼容测试镜像，细节见README。`--skip-full`仅跳过全后端；`--live-only`在全浏览器已经通过后只重跑实际服务浏览器项。测试API先通过随机运行身份握手，之后才创建账号/资料，防止端口误连。
+复现工程验收需要运行中的 Docker、后端开发依赖和兼容的后端运行镜像 `studyrag-backend:stage6-clean`。前端需安装 Node.js 22 和 npm，在 `frontend/` 执行 `npm ci`，并准备 Playwright 配置所需的浏览器。
 
-`--live-model`额外进行新一轮真实对照，仍共享本轮持久60次账本，不能删除账本或重试挑选答案。独立AI复核入口为`python -m scripts.review_optimization56 <quality目录>`，拒绝覆盖已有复核文件；它也计入相同额度。本轮现有结果无需重跑。
+若本机没有后端镜像，可从仓库根目录构建：
+
+```powershell
+docker build --target runtime -f infra/backend.Dockerfile -t studyrag-backend:stage6-clean .
+```
+
+然后从 `backend/` 运行 `python -m scripts.validate_optimization56`。脚本使用独立 PostgreSQL/Redis、Worker、HTTP/SSE 和浏览器环境，供应商与 Embedding 使用受控替身。
+`--skip-full`仅跳过全后端；`--live-only`在全浏览器已经通过后只重跑实际服务浏览器项。测试API先通过随机运行身份握手，之后才创建账号/资料，防止端口误连。
+
+`--live-model`额外进行新一轮真实对照，仍共享本轮 `.runtime/optimization56/model-budget.json` 持久 60 次账本，不能删除账本或重试挑选答案。独立AI复核入口为`python -m scripts.review_optimization56 <quality目录>`，拒绝覆盖已有复核文件；它也计入相同额度。本轮现有结果无需重跑。
 
 本轮专属进程、容器、匿名卷、网络、测试存储与暂停标记均按身份清理；结束时再清理本轮pytest临时目录、重复无用截图和新增模块字节码。保留正式实现/回归/自制样本、必要失败记录、最终摘要及持久额度账本。原业务容器、阶段3/4工作、`.idea/`、依赖、模型缓存、构建目录和其他原有文件保留；未执行全局清理、提交、推送或部署。

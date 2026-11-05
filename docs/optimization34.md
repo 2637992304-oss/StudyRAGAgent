@@ -20,6 +20,7 @@
 ## 记录口径
 
 `messages.measurements`（迁移0009）为空表示旧记录口径未知，不重算历史。
+消息接口提供 `measurements` 和 `measurement_status`，保留旧 Token 字段。
 新记录version=1区分逻辑调用、实际HTTP尝试、工具调用及本地Embedding。
 usage的complete/partial/missing/no_calls区分完整、部分、缺失及未调用；known_*只是小计。
 失败重试的usage未知使整轮总量保持未知。缓存/推理Token是供应商总量子集，不重复相加。
@@ -32,6 +33,7 @@ server_first_body_ms为已核验正文首次交给SSE迭代器的时间；不保
 浏览器通过performance.now和requestAnimationFrame记录首次正文渲染机会，发出studyrag:answer-visible事件；不是精确屏幕绘制测量，也不和服务端时钟相减。
 load_conditions=unmeasured时未区分冷暖/并发，不据此比较性能。
 
+`INGESTION_AGGREGATE_SHORT`（短段聚合）和 `RETRIEVAL_ADJACENT_CONTEXT`（相邻补取）均默认关闭。
 生产默认保持不变，已有资料/引用不重建。候选只作用于显式新建资料和新请求；关闭开关不重切已有块，应保留版本并重新上传隔离副本比较。
 
 
@@ -75,7 +77,7 @@ Codex辅助阅读发现：基线Word回答遗漏“上一批完成后才能启�
 
 ### 复现与剩余验收
 
-从backend运行 `python -m scripts.evaluate_optimization_context`（本地Embedding、无付费请求）；
+从 `backend/` 运行 `python -m scripts.evaluate_optimization_context`，默认使用本地 Embedding 和隔离 SQLite 精确余弦对照，结果写入本机 `.runtime/optimization34/`。SQLite 对照与下文的 PostgreSQL/pgvector 工程验收分别记录。
 加 `--live` 才进行受60次预留预算限制的真实问答。本轮已经46次，不再追加模型请求。
 专项测试 `pytest tests/test_optimization_metrics.py tests/test_optimization_measurement_http.py
  tests/test_optimization_context.py tests/test_optimization_context_runner.py tests/test_optimization_measurement_migration.py`。
@@ -104,7 +106,7 @@ PostgreSQL离线迁移SQL生成通过（310行，未连接数据库）；静态�
 修正样本标识后，以全新的容器和数据库完整重跑通过；未改过滤逻辑或降低断言。
 首轮失败XML/日志保留。新增外部模型请求0次，总数仍46；O05仍不推广。
 
-复现入口 `python -m scripts.validate_measurement_services` 已运行通过。
+Docker 运行后，从 `backend/` 执行 `python -m scripts.validate_measurement_services`。脚本使用独立 PostgreSQL 和 Redis 容器、动态回环端口及测试数据库，使用供应商替身运行迁移和后端回归，结束后清理本轮容器和匿名卷。
 最终证据在本机 `.runtime/optimization34/services-82e34jqj/`（XML、摘要、升级与结构检查记录），
 首轮记录在services-7fgf75t_。专用测试容器/匿名卷及pytest临时目录已清理，
 仅保留有效证据；原业务数据库、原容器和用户文件未改。
